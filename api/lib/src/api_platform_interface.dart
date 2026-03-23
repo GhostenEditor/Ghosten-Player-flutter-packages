@@ -35,19 +35,15 @@ abstract class ApiPlatform extends PlatformInterface {
   Future<bool?> initialized() async => true;
 
   Future<void> syncData(String filePath) {
-    throw UnimplementedError('syncData() has not been implemented.');
+    return client.post('/data/sync', data: {'path': filePath});
   }
 
   Future<void> rollbackData() {
-    throw UnimplementedError('rollbackData() has not been implemented.');
+    return client.post('/data/rollback');
   }
 
   Future<void> resetData() {
-    throw UnimplementedError('resetData() has not been implemented.');
-  }
-
-  Future<void> log(int level, String message) {
-    throw UnimplementedError('log() has not been implemented.');
+    return client.post('/data/reset');
   }
 
   Stream<T> streamWithCallback<T, D>(Future<dynamic> future, T Function(D) callback);
@@ -236,7 +232,7 @@ abstract class ApiPlatform extends PlatformInterface {
 
   /// Search Start
   Future<SearchFuzzyResult> searchFuzzy(
-    String type, {
+    SearchFuzzyType type, {
     String? filter,
     List<dynamic>? genres,
     List<dynamic>? studios,
@@ -251,7 +247,7 @@ abstract class ApiPlatform extends PlatformInterface {
     final data = await client.post(
       '/search/fuzzy',
       data: {
-        'type': type,
+        'type': type.index,
         'filter': filter,
         'genres': genres,
         'studios': studios,
@@ -589,22 +585,8 @@ abstract class ApiPlatform extends PlatformInterface {
     );
   }
 
-  Future<PageData<Log>> logQueryPage(int limit, int offset, [(int, int)? range]) async {
-    final data = await client.get(
-      '/log/query/page',
-      queryParameters: {'limit': limit, 'offset': offset, 'start': range?.$1, 'end': range?.$2},
-    );
-    return PageData.fromJson(data, Log.fromJson);
-  }
-
-  Future<void> validate({String? tmdbApiKey, String? license}) {
-    return client.post(
-      '/validate',
-      data: {
-        'tmdbApiKey': tmdbApiKey,
-        'license': license,
-      },
-    );
+  Future<void> setTmdbApiKey(String key) {
+    return client.post('/tmdb/apikey', data: {'apiKey': key});
   }
 
   /// Miscellaneous End

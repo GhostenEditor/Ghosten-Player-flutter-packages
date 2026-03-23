@@ -13,7 +13,7 @@ class Api {
   static final initialized = ApiPlatform.instance.initialized;
   static final rollbackData = ApiPlatform.instance.rollbackData;
   static final resetData = ApiPlatform.instance.resetData;
-  static final log = ApiPlatform.instance.log;
+  static final setTmdbApiKey = ApiPlatform.instance.setTmdbApiKey;
   static final fileInfo = ApiPlatform.instance.fileInfo;
   static final fileList = ApiPlatform.instance.fileList;
   static final fileRename = ApiPlatform.instance.fileRename;
@@ -100,8 +100,6 @@ class Api {
   static final updatePlayedStatus = ApiPlatform.instance.updatePlayedStatus;
   static final setSkipTime = ApiPlatform.instance.setSkipTime;
   static final networkDiagnostics = ApiPlatform.instance.networkDiagnostics;
-  static final logQueryPage = ApiPlatform.instance.logQueryPage;
-  static final validate = ApiPlatform.instance.validate;
   static final dlnaDiscover = ApiPlatform.instance.dlnaDiscover;
   static final dlnaSetUri = ApiPlatform.instance.dlnaSetUri;
   static final dlnaPlay = ApiPlatform.instance.dlnaPlay;

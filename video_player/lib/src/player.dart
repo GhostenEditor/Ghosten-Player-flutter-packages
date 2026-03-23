@@ -19,7 +19,7 @@ abstract class PlayerBaseController {
 enum PlaybackStatusEvent { start, progress, stop }
 
 class PlayerController<T> implements PlayerBaseController {
-  PlayerController(Function(int, String)? onLog, {this.onGetPlayBackInfo, this.onPlaybackStatusUpdate}) {
+  PlayerController({this.onGetPlayBackInfo, this.onPlaybackStatusUpdate}) {
     index.addListener(() {
       title.value = currentItem?.title;
       subTitle.value = currentItem?.description ?? '';
@@ -75,11 +75,6 @@ class PlayerController<T> implements PlayerBaseController {
           mediaInfo.value = MediaInfo.fromJson(call.arguments);
         case 'willSkip':
           willSkip.value = UniqueKey();
-        case 'log':
-          if (onLog != null) {
-            // ignore: avoid_dynamic_calls
-            onLog(call.arguments['level'], call.arguments['message']);
-          }
       }
     });
 

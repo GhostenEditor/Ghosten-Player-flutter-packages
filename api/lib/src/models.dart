@@ -714,16 +714,6 @@ class PageData<D> {
   final List<D> data;
 }
 
-class Log {
-  Log.fromJson(dynamic json)
-    : level = LogLevel.fromInt(json[0]),
-      message = json[1],
-      time = (json[2] as String).toDateTime()!;
-  final LogLevel level;
-  final DateTime time;
-  final String message;
-}
-
 class IdResponse {
   IdResponse.fromJson(dynamic json) : id = json[0];
   final dynamic id;

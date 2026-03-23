@@ -31,15 +31,17 @@ interface EventLoggerHandler {
 
 @UnstableApi
 @Suppress("SameParameterValue")
-class EventLogger(private val handler: EventLoggerHandler) : AnalyticsListener {
+class EventLogger : AnalyticsListener {
     private val startTimeMs: Long = SystemClock.elapsedRealtime()
     private val period = Timeline.Period()
 
     private fun log(level: Int, eventTime: EventTime, eventName: String, message: String) {
-        handler.onLog(
-            level,
-            "Media3: " + eventName + "\n" + getEventTimeString(eventTime) + "\n" + message
-        )
+        when (level) {
+            1 -> Log.e("Media3", eventName + ": " + getEventTimeString(eventTime) + ": " + message)
+            2 -> Log.w("Media3", eventName + ": " + getEventTimeString(eventTime) + ": " + message)
+            3 -> Log.i("Media3", eventName + ": " + getEventTimeString(eventTime) + ": " + message)
+            4 -> Log.d("Media3", eventName + ": " + getEventTimeString(eventTime) + ": " + message)
+        }
     }
 
 //    fun logi(eventTime: EventTime, eventName: String) {

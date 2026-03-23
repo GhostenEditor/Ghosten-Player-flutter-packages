@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:msgpack_dart/msgpack_dart.dart';
 
 import 'api_platform_interface.dart';
-import 'errors.dart';
 import 'models.dart';
 
 const _pluginNamespace = 'com.ghosten.player/api';
@@ -31,21 +30,6 @@ class MethodChannelApi extends ApiPlatform {
     }
     return false;
   }
-
-  @override
-  Future<void> syncData(String filePath) => _methodChannel.invokeMethod('syncData', filePath);
-
-  @override
-  Future<void> rollbackData() => _methodChannel
-      .invokeMethod('rollbackData')
-      .catchError((_) => throw PlatformException(code: rollbackDataExceptionCode));
-
-  @override
-  Future<void> resetData() => _methodChannel.invokeMethod('resetData');
-
-  @override
-  Future<void> log(int level, String message) =>
-      _methodChannel.invokeMethod('log', {'level': level, 'message': message});
 
   /// Session Start
 

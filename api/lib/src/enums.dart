@@ -1,22 +1,3 @@
-enum LogLevel {
-  error,
-  warn,
-  info,
-  debug,
-  trace;
-
-  static LogLevel fromInt(int? level) {
-    return switch (level) {
-      1 => LogLevel.error,
-      2 => LogLevel.warn,
-      3 => LogLevel.info,
-      4 => LogLevel.debug,
-      5 => LogLevel.trace,
-      _ => throw Exception('Wrong Log Level of "$level"'),
-    };
-  }
-}
-
 enum MediaType { movie, series, season, episode }
 
 enum DriverType { local, webdav, alipan, quark, emby, jellyfin }
@@ -80,3 +61,5 @@ enum ScheduleTaskType { syncLibrary, scrapeLibrary }
 enum ScheduleTaskStatus { idle, running, paused, completed, error }
 
 enum ScraperBehavior { skip, chooseFirst, exact }
+
+enum SearchFuzzyType { all, movie, series, episode, cast, crew }

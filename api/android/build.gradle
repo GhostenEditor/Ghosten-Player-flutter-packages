@@ -81,8 +81,8 @@ task downloadDependencies {
     group = "build"
 
     def dependencyName = "lib-api-release.aar"
-    def dependencyVersion = "v0.0.2"
-    def dependencyMd5 = "945a900f8798127c7e215b18a53c70a9"
+    def dependencyVersion = "v0.0.3"
+    def dependencyMd5 = "ebb5d4053c2cb7c2b2c1b5dc5da1e8a5"
     def dependencyUrl = "https://github.com/GhostenEditor/Ghosten-Player-flutter-packages/releases/download/$dependencyVersion/$dependencyName"
     def outputDir = file("$buildDir/output")
     def destination = file("$buildDir/$dependencyVersion/$dependencyName")
@@ -136,8 +136,6 @@ task downloadDependencies {
     } catch (Exception e) {
         throw new GradleException("Unzip failed: ${e.message}", e)
     }
-
-    println "Downloaded"
 }
 
 assemble.dependsOn(downloadDependencies)

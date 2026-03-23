@@ -15,16 +15,11 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.io.IOException
 import java.net.InetAddress
 import java.net.NetworkInterface
-import java.util.Collections
-import java.util.UUID
+import java.util.*
 
 class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnection {
     private lateinit var channel: MethodChannel
@@ -52,36 +47,6 @@ class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnec
                 } else {
                     methodCallResult = result
                 }
-            }
-
-            "syncData" -> {
-                try {
-                    apiService?.syncData(call.arguments as String)
-                } catch (e: IOException) {
-                    result.error(TAG, "Sync Data Failed", e)
-                }
-            }
-
-            "rollbackData" -> {
-                try {
-                    apiService?.rollbackData()
-                    result.success(null)
-                } catch (e: IOException) {
-                    result.error(TAG, "Rollback Data Failed", e)
-                }
-            }
-
-            "resetData" -> {
-                try {
-                    apiService?.resetData()
-                    result.success(null)
-                } catch (e: IOException) {
-                    result.error(TAG, "Reset Failed", e)
-                }
-            }
-
-            "log" -> {
-                apiService?.log(call.argument<Int>("level")!!, call.argument<String>("message")!!)
             }
 
             else -> {
@@ -194,11 +159,12 @@ class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnec
     }
 
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-        val binder = service as ApiService.LocalBinder
-        apiService = binder.getService()
-        serviceConnected = true
-        methodCallResult?.success(apiService?.apiInitializedPort())
-        methodCallResult = null
+        if (service is ApiService.LocalBinder) {
+            apiService = service.getService()
+            serviceConnected = true
+            methodCallResult?.success(apiService?.apiInitializedPort())
+            methodCallResult = null
+        }
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
