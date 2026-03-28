@@ -572,8 +572,8 @@ class PlayerHistory {
       title = json[2],
       poster = json[3],
       duration = (json[4] as int?).toDuration(),
-      lastPlayedTime = ((json[5] as String?)?.toDateTime())!,
-      lastPlayedPosition = (json[6] as int?).toDuration();
+      lastPlayedPosition = (json[5] as int?).toDuration(),
+      lastPlayedTime = ((json[6] as String?)?.toDateTime())!;
   final dynamic id;
   final MediaType mediaType;
   final String title;
