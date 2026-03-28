@@ -82,10 +82,10 @@ task downloadDependencies {
 
     def dependencyName = "lib-api-release.aar"
     def dependencyVersion = "v0.0.3"
-    def dependencyMd5 = "ebb5d4053c2cb7c2b2c1b5dc5da1e8a5"
+    def dependencyMd5 = "eb94bf112e0f897f0044d2fb5f1c47f9"
     def dependencyUrl = "https://github.com/GhostenEditor/Ghosten-Player-flutter-packages/releases/download/$dependencyVersion/$dependencyName"
     def outputDir = file("$buildDir/output")
-    def destination = file("$buildDir/$dependencyVersion/$dependencyName")
+    def destination = file("$buildDir/cache/$dependencyName")
     if (outputDir.exists()) {
         outputDir.deleteDir()
     }
@@ -97,7 +97,6 @@ task downloadDependencies {
 
         if (calculatedMD5 != dependencyMd5) {
             destFile.delete()
-            println "MD5 mismatch. File deleted: ${destFile}"
         }
 
     }

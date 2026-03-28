@@ -366,10 +366,10 @@ abstract class ApiPlatform extends PlatformInterface {
     return client.post('/movie/metadata/update/id', data: data);
   }
 
-  Future<void> movieScraperById(dynamic id, String scraperId, String scraperType, String? scraperLang) {
+  Future<void> movieScraperById(dynamic id, String scraperId, ScraperType scraperType, String? scraperLang) {
     return client.post(
       '/movie/scraper/id',
-      data: {'id': id, 'scraperType': scraperType, 'scraperId': scraperId, 'scraperLang': scraperLang},
+      data: {'id': id, 'scraperType': scraperType.index, 'scraperId': scraperId, 'scraperLang': scraperLang},
     );
   }
 
@@ -418,10 +418,10 @@ abstract class ApiPlatform extends PlatformInterface {
     return listFromJson(data, TVEpisode.fromJson);
   }
 
-  Future<void> tvSeriesScraperById(dynamic id, String scraperId, String scraperType, String? language) {
+  Future<void> tvSeriesScraperById(dynamic id, String scraperId, ScraperType scraperType, String? language) {
     return client.post(
       '/tv/series/scraper/id',
-      data: {'id': id, 'scraperType': scraperType, 'scraperId': scraperId, 'scraperLang': language},
+      data: {'id': id, 'scraperType': scraperType.index, 'scraperId': scraperId, 'scraperLang': language},
     );
   }
 
