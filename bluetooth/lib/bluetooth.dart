@@ -100,19 +100,16 @@ class Bluetooth {
     return methodChannel.invokeMethod('disconnect');
   }
 
-  static Future<void> write(BluetoothMessage data) {
-    return switch (data.type) {
-      BlueToothMessageType.file => _writeFile(data.data),
-      BlueToothMessageType.text => _writeText(data.data),
-    };
-  }
-
-  static Future<void> _writeText(String data) {
+  static Future<void> writeText(String data) {
     return methodChannel.invokeMethod('writeText', data);
   }
 
-  static Future<void> _writeFile(String path) {
-    return methodChannel.invokeMethod('writeFile', path);
+  static Stream<double> writeFile(String path) async* {
+    final id = await methodChannel.invokeMethod<String>('writeFile', path);
+    if (id != null) {
+      final eventChannel = EventChannel('$namespace/update/$id');
+      yield* eventChannel.receiveBroadcastStream(id).map((d) => d as double);
+    }
   }
 
   static Future<void> openSettings() {

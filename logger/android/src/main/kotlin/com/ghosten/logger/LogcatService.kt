@@ -74,7 +74,7 @@ class LogcatService : Service(), Thread.UncaughtExceptionHandler {
                 writeToFile(getLogFile(), line)
             }
         } catch (e: IOException) {
-            e.printStackTrace()
+//            e.printStackTrace()
         } finally {
             cleanup()
         }
@@ -110,7 +110,7 @@ class LogcatService : Service(), Thread.UncaughtExceptionHandler {
             fileWriter!!.flush()
             fileWriter!!.close()
         } catch (e: IOException) {
-            e.printStackTrace()
+//            e.printStackTrace()
         }
     }
 

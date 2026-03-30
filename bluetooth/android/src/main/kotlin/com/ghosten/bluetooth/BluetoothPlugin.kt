@@ -19,6 +19,7 @@ import io.flutter.Log
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.EventChannel.EventSink
 import io.flutter.plugin.common.EventChannel.StreamHandler
@@ -38,19 +39,22 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
 
-class BluetoothPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
+class BluetoothPlugin : FlutterPlugin, MethodCallHandler, StreamHandler, ActivityAware {
     private lateinit var channel: MethodChannel
     private lateinit var discoveryChannel: EventChannel
     private lateinit var connectionChannel: EventChannel
     private lateinit var connectedChannel: EventChannel
     private lateinit var mBluetooth: Bluetooth
+    private lateinit var binaryMessenger: BinaryMessenger
+    private lateinit var activity: Activity
+    private val eventSinkMap: MutableMap<Any, EventChannel.EventSink> = mutableMapOf()
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        val messenger = flutterPluginBinding.binaryMessenger
-        channel = MethodChannel(messenger, "$PLUGIN_NAMESPACE/methods")
-        discoveryChannel = EventChannel(messenger, "$PLUGIN_NAMESPACE/discovery")
-        connectionChannel = EventChannel(messenger, "$PLUGIN_NAMESPACE/connection")
-        connectedChannel = EventChannel(messenger, "$PLUGIN_NAMESPACE/connected")
+        binaryMessenger = flutterPluginBinding.binaryMessenger
+        channel = MethodChannel(binaryMessenger, "$PLUGIN_NAMESPACE/methods")
+        discoveryChannel = EventChannel(binaryMessenger, "$PLUGIN_NAMESPACE/discovery")
+        connectionChannel = EventChannel(binaryMessenger, "$PLUGIN_NAMESPACE/connection")
+        connectedChannel = EventChannel(binaryMessenger, "$PLUGIN_NAMESPACE/connected")
         channel.setMethodCallHandler(this)
     }
 
@@ -107,8 +111,32 @@ class BluetoothPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
 
             "writeFile" -> {
-                mBluetooth.methodCallResult = result
-                mBluetooth.writeFile(call.arguments as String)
+                val id = UUID.randomUUID().toString()
+                val eventChannel =
+                    EventChannel(binaryMessenger, "$PLUGIN_NAMESPACE/update/$id")
+                eventChannel.setStreamHandler(this)
+                Thread {
+                    try {
+                        mBluetooth.writeFile(call.arguments as String) {
+                            activity.runOnUiThread {
+                                eventSinkMap[id]?.success(it)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Bluetooth Connection Write File Failed", e)
+                        activity.runOnUiThread {
+                            eventSinkMap[id]?.error(
+                                TAG,
+                                "Bluetooth Connection Write File Failed",
+                                e
+                            )
+                        }
+                    }
+                    activity.runOnUiThread {
+                        eventSinkMap[id]?.endOfStream()
+                    }
+                }.start()
+                result.success(id)
             }
 
             "writeText" -> {
@@ -134,8 +162,9 @@ class BluetoothPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activity = binding.activity
         mBluetooth = Bluetooth(
-            binding.activity,
+            activity,
             discoveryChannel,
             connectionChannel,
             connectedChannel
@@ -153,8 +182,19 @@ class BluetoothPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onDetachedFromActivity() {
     }
 
+    override fun onListen(arguments: Any?, eventSink: EventSink?) {
+        if (eventSink != null) {
+            eventSinkMap[arguments!!] = eventSink
+        }
+    }
+
+    override fun onCancel(arguments: Any?) {
+        eventSinkMap.remove(arguments)?.endOfStream()
+    }
+
     companion object {
         const val PLUGIN_NAMESPACE = "com.ghosten.bluetooth"
+        const val TAG = "BLUETOOTH"
     }
 }
 
@@ -424,7 +464,7 @@ internal class Bluetooth(
         }
     }
 
-    fun writeFile(filePath: String) {
+    fun writeFile(filePath: String, onProgress: ((Double) -> Unit)? = null) {
         if (connectionThread == null) {
             methodCallResult?.error(TAG, "No Connection", IOException("not connected"))
             methodCallResult = null
@@ -434,7 +474,7 @@ internal class Bluetooth(
                 methodCallResult?.error(TAG, "File Not Existed", IOException(filePath))
                 methodCallResult = null
             } else {
-                connectionThread!!.writeFile(file)
+                connectionThread!!.writeFile(file, onProgress)
             }
         }
     }
@@ -616,28 +656,19 @@ internal class Bluetooth(
             }
         }
 
-        fun writeFile(file: File) {
+        fun writeFile(file: File, onProgress: ((Double) -> Unit)? = null) {
+            val fileSize = file.length().toDouble()
+            var readSize = 0
             val filStream = FileInputStream(file)
-            try {
-                mOut.writeInt(FLAG_FILE)
-                mOut.writeUTF(file.name)
-                mOut.writeLong(file.length())
-                var r: Int
-                val b = ByteArray(4 * 1024)
-                while ((filStream.read(b).also { r = it }) != -1) {
-                    mOut.write(b, 0, r)
-                }
-                methodCallResult?.success(null)
-                methodCallResult = null
-            } catch (e: IOException) {
-                Log.e(TAG, "Bluetooth Connection Write File Failed, Filename: ${file.name}", e)
-                methodCallResult?.error(
-                    TAG,
-                    "Bluetooth Connection Write File Failed, Filename: ${file.name}",
-                    e
-                )
-                methodCallResult = null
-                return
+            mOut.writeInt(FLAG_FILE)
+            mOut.writeUTF(file.name)
+            mOut.writeLong(file.length())
+            var r: Int
+            val b = ByteArray(4 * 1024)
+            while ((filStream.read(b).also { r = it }) != -1) {
+                mOut.write(b, 0, r)
+                readSize += b.size
+                if (fileSize > 0) onProgress?.invoke(readSize / fileSize)
             }
         }
 
