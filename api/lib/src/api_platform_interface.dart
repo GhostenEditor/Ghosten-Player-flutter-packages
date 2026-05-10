@@ -210,14 +210,28 @@ abstract class ApiPlatform extends PlatformInterface {
   /// DNS End
 
   /// Server Start
-
   Future<List<Server>> serverQueryAll() async {
     final data = await client.get('/server/query/all');
     return listFromJson(data, Server.fromJson);
   }
 
-  Future<void> serverInsert(Map<String, dynamic> data) {
-    return client.put('/server/insert', data: data);
+  Future<void> serverInsert({
+    required ServerType type,
+    required String host,
+    required String username,
+    String? userPassword,
+    String? userAgent,
+  }) {
+    return client.put(
+      '/server/insert',
+      data: {
+        'type': type.index,
+        'host': host.trim(),
+        'username': username.trim(),
+        'userPassword': userPassword?.trim(),
+        'userAgent': (userAgent?.isNotEmpty ?? false) ? userAgent : null,
+      },
+    );
   }
 
   Future<void> serverActiveById(int id) {
