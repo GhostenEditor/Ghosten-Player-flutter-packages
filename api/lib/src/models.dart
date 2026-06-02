@@ -381,8 +381,8 @@ class SubtitleData {
     : id = json[0],
       url = json[1],
       label = json[2],
-      language = json[3],
-      mimeType = json[4],
+      mimeType = json[3],
+      language = json[4],
       selected = json[5];
   final dynamic id;
   final String? url;
