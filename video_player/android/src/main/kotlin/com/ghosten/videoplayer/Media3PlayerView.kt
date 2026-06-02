@@ -824,7 +824,8 @@ class Media3PlayerView(
             }
 
             Player.STATE_ENDED -> {
-                player.seekTo(0, mPlaylist[0].startPosition)
+                if (player.mediaItemCount > 0)
+                    player.seekTo(0, mPlaylist[0].startPosition)
             }
 
             Player.STATE_IDLE -> {
