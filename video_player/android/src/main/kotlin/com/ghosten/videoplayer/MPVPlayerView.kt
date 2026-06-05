@@ -308,6 +308,10 @@ class MPVPlayerView(
         MPVLib.setPropertyString("video-aspect-override", aspectRatio?.toString() ?: "-1")
     }
 
+    override fun setResizeMode(mode: Int) {
+        // TODO("Not yet implemented")
+    }
+
     override fun fullscreen(flag: Boolean) {
         if (flag) {
             layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT

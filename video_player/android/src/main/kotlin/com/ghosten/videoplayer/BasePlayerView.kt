@@ -13,6 +13,7 @@ interface BasePlayerView {
     fun setSource(data: HashMap<String, Any>?)
     fun setTransform(matrix: ArrayList<Double>)
     fun setAspectRatio(aspectRatio: Float?)
+    fun setResizeMode(mode: Int)
     fun fullscreen(flag: Boolean)
     fun dispose()
     fun setTrack(trackType: String?, trackId: String?)

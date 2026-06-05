@@ -14,7 +14,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.net.InetAddress
 import java.net.NetworkInterface
-import java.util.Collections
+import java.util.*
 
 class PlayerViewPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware,
     Application.ActivityLifecycleCallbacks {
@@ -89,6 +89,7 @@ class PlayerViewPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Activit
                             "setSource" -> mPlayerView?.setSource(call.arguments as HashMap<String, Any>?)
                             "setTransform" -> mPlayerView?.setTransform(call.argument("matrix")!!)
                             "setAspectRatio" -> mPlayerView?.setAspectRatio((call.arguments as Double?)?.toFloat())
+                            "setResizeMode" -> mPlayerView?.setResizeMode(call.arguments as Int)
                             "fullscreen" -> mPlayerView?.fullscreen(call.arguments as Boolean)
                             "dispose" -> {
                                 mPlayerView?.dispose()

@@ -53,6 +53,11 @@ class MethodChannelPlayer extends PlayerPlatform {
   }
 
   @override
+  Future<void> setResizeMode(int mode) {
+    return _channel.invokeMethod('setResizeMode', mode);
+  }
+
+  @override
   Future<void> setSource(Map<String, dynamic>? item) {
     return _channel.invokeMethod('setSource', item);
   }

@@ -924,6 +924,10 @@ class Media3PlayerView(
         )
     }
 
+    override fun setResizeMode(mode: Int) {
+        mNativeView.findViewById<AspectRatioFrameLayout>(androidx.media3.ui.R.id.exo_content_frame).resizeMode = mode;
+    }
+
     override fun fullscreen(flag: Boolean) {
         if (flag) {
             (mNativeView.layoutParams as FrameLayout.LayoutParams).width =

@@ -98,6 +98,7 @@ class PlayerController<T> implements PlayerBaseController {
   final ValueNotifier<Object?> playlistError = ValueNotifier(null);
   final ValueNotifier<double> playbackSpeed = ValueNotifier(1);
   final ValueNotifier<AspectRatioType> aspectRatio = ValueNotifier(AspectRatioType.auto);
+  final ValueNotifier<ResizeMode> resizeMode = ValueNotifier(ResizeMode.fit);
   final ValueNotifier<double> volume = ValueNotifier(1);
   @override
   final ValueNotifier<Duration> position = ValueNotifier(Duration.zero);
@@ -136,6 +137,7 @@ class PlayerController<T> implements PlayerBaseController {
     subTitle.dispose();
     playbackSpeed.dispose();
     aspectRatio.dispose();
+    resizeMode.dispose();
     position.dispose();
     duration.dispose();
     bufferedPosition.dispose();
@@ -239,6 +241,10 @@ class PlayerController<T> implements PlayerBaseController {
 
   Future<void> setAspectRatio(double? aspectRatio) {
     return PlayerPlatform.instance.setAspectRatio(aspectRatio);
+  }
+
+  Future<void> setResizeMode(int mode) {
+    return PlayerPlatform.instance.setResizeMode(mode);
   }
 
   Future<void> updateSource(PlaylistItemDisplay<T> source, int index) {

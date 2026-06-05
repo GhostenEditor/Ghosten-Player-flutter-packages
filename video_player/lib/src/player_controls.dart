@@ -292,7 +292,8 @@ class PlayerLocalizations extends InheritedWidget {
     required this.videoSettingsSubtitle,
     required this.videoSettingsSpeeding,
     required this.videoSettingsNone,
-    required this.videoSize,
+    required this.videoAspectRatio,
+    required this.videoResizeMode,
     required this.playerEnableDecoderFallback,
     required this.playerShowLiteProgressbar,
     required this.tagUnknown,
@@ -316,7 +317,8 @@ class PlayerLocalizations extends InheritedWidget {
   final String videoSettingsSubtitle;
   final String videoSettingsSpeeding;
   final String videoSettingsNone;
-  final String videoSize;
+  final String videoAspectRatio;
+  final String videoResizeMode;
   final String playerEnableDecoderFallback;
   final String playerShowLiteProgressbar;
   final String tagUnknown;
@@ -429,19 +431,50 @@ class PlayerSettings extends StatelessWidget {
                 child: PopupMenuButton(
                   onSelected: (aspectRatio) {
                     controller.aspectRatio.value = aspectRatio;
-                    controller.setAspectRatio(aspectRatio.value(context));
+                    controller.resizeMode.value = ResizeMode.fit;
+                    controller.setAspectRatio(aspectRatio.value());
+                    controller.setResizeMode(ResizeMode.values.indexOf(ResizeMode.fit));
                   },
                   child: ListTile(
                     leading: const Icon(Icons.aspect_ratio_rounded),
-                    title: Text(localizations.videoSize),
-                    trailing: Text(controller.aspectRatio.value.label(context)),
+                    title: Text(localizations.videoAspectRatio),
+                    trailing: Text(controller.aspectRatio.value.label()),
                   ),
                   itemBuilder: (context) => AspectRatioType.values
                       .map(
                         (aspectRatio) => CheckedPopupMenuItem(
                           checked: controller.aspectRatio.value == aspectRatio,
                           value: aspectRatio,
-                          child: Text(aspectRatio.label(context)),
+                          child: Text(aspectRatio.label()),
+                        ),
+                      )
+                      .toList(),
+                ),
+              );
+            },
+          ),
+          ListenableBuilder(
+            listenable: controller.resizeMode,
+            builder: (context, _) {
+              return SliverToBoxAdapter(
+                child: PopupMenuButton(
+                  onSelected: (resizeMode) {
+                    controller.resizeMode.value = resizeMode;
+                    controller.aspectRatio.value = AspectRatioType.auto;
+                    controller.setAspectRatio(AspectRatioType.auto.value());
+                    controller.setResizeMode(ResizeMode.values.indexOf(resizeMode));
+                  },
+                  child: ListTile(
+                    leading: const Icon(Icons.zoom_out_map_rounded),
+                    title: Text(localizations.videoResizeMode),
+                    trailing: Text(controller.resizeMode.value.label()),
+                  ),
+                  itemBuilder: (context) => ResizeMode.values
+                      .map(
+                        (resizeMode) => CheckedPopupMenuItem(
+                          checked: controller.resizeMode.value == resizeMode,
+                          value: resizeMode,
+                          child: Text(resizeMode.label()),
                         ),
                       )
                       .toList(),
