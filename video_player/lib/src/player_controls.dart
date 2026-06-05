@@ -632,8 +632,9 @@ class PlayerSettings extends StatelessWidget {
         ...tracks.map(
           (e) => CheckedPopupMenuItem(
             checked: selected == e.id,
+            enabled: e.supported,
             value: e.id,
-            child: Text(e.label ?? localizations.tagUnknown),
+            child: Text(_getTrackText(e)),
           ),
         ),
       ],
@@ -646,7 +647,7 @@ class PlayerSettings extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                selectedTrack?.label ?? localizations.videoSettingsNone,
+                selectedTrack?.name ?? localizations.videoSettingsNone,
                 textAlign: TextAlign.end,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -656,6 +657,29 @@ class PlayerSettings extends StatelessWidget {
         trailing: const Icon(Icons.chevron_right),
       ),
     );
+  }
+
+  String _getTrackText(MediaTrack track) {
+    final spans = [];
+    if (track.name?.isNotEmpty ?? false) {
+      spans.add(track.name);
+    }
+    if (track.label?.isNotEmpty ?? false) {
+      spans.add(track.label);
+    }
+    if (track.mimeType?.isNotEmpty ?? false) {
+      final mimes = track.mimeType!.split('/');
+      if (mimes.length >= 2) {
+        spans.add(mimes[1]);
+      }
+    }
+    if (track.rate != null && track.rate! > 0) {
+      spans.add('${track.rate}Hz');
+    }
+    if (track.averageBitrate != null && track.averageBitrate! > 0) {
+      spans.add('${track.rate}Bit/s');
+    }
+    return spans.join(', ');
   }
 }
 

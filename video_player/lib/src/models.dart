@@ -28,14 +28,24 @@ enum PlayerStatus {
 
 class MediaTrack {
   MediaTrack.fromJson(dynamic json)
-    : label = json['label'],
-      id = json['id'],
-      type = json['type'],
-      selected = json['selected'];
-  String? label;
+    : id = json['id'],
+      selected = json['selected'],
+      supported = json['supported'],
+      label = json['label'],
+      mimeType = json['mimeType'],
+      rate = json['rate'],
+      averageBitrate = json['averageBitrate'],
+      name = json['name'],
+      type = json['type'];
   String? id;
-  String type;
   bool selected;
+  bool supported;
+  String? label;
+  String? mimeType;
+  int? rate;
+  int? averageBitrate;
+  String? name;
+  String type;
 }
 
 class MediaTrackGroup {

@@ -1,10 +1,6 @@
 package com.ghosten.videoplayer
 
-import android.app.Activity
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.app.PictureInPictureParams
+import android.app.*
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -20,14 +16,7 @@ import android.widget.FrameLayout
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
-import androidx.media3.common.C
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.MimeTypes
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
-import androidx.media3.common.TrackSelectionOverride
-import androidx.media3.common.Tracks
+import androidx.media3.common.*
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
@@ -57,7 +46,7 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ExecutionException
 
 @UnstableApi
@@ -611,23 +600,26 @@ class Media3PlayerView(
                 val isSupported = trackGroup.isTrackSupported(i)
                 val isSelected = trackGroup.isTrackSelected(i)
                 val trackFormat = trackGroup.getTrackFormat(i)
-                if (isSupported) {
-                    val track = HashMap<String, Any?>().apply {
-                        this["selected"] = isSelected
-                        this["label"] = trackNameProvider.getTrackName(trackFormat)
-                        this["type"] = when (trackType) {
-                            C.TRACK_TYPE_AUDIO -> "audio"
-                            C.TRACK_TYPE_VIDEO -> "video"
-                            C.TRACK_TYPE_TEXT -> "sub"
-                            else -> {
-                                null
-                            }
-                        } ?: ""
-                        this["id"] = trackFormat.id
-                    }
-                    if (track["type"] != null) {
-                        tracksList.add(track)
-                    }
+                val track = HashMap<String, Any?>().apply {
+                    this["id"] = trackFormat.id
+                    this["selected"] = isSelected
+                    this["supported"] = isSupported
+                    this["label"] = trackFormat.label
+                    this["mimeType"] = trackFormat.sampleMimeType
+                    this["rate"] = trackFormat.sampleRate
+                    this["averageBitrate"] = trackFormat.averageBitrate
+                    this["name"] = trackNameProvider.getTrackName(trackFormat)
+                    this["type"] = when (trackType) {
+                        C.TRACK_TYPE_AUDIO -> "audio"
+                        C.TRACK_TYPE_VIDEO -> "video"
+                        C.TRACK_TYPE_TEXT -> "sub"
+                        else -> {
+                            null
+                        }
+                    } ?: ""
+                }
+                if (track["type"] != null) {
+                    tracksList.add(track)
                 }
             }
         }

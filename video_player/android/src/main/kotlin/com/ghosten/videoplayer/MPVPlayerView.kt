@@ -200,15 +200,26 @@ class MPVPlayerView(
                 continue
             }
             val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
-//            val lang = MPVLib.getPropertyString("track-list/$i/lang")
+            val lang = MPVLib.getPropertyString("track-list/$i/lang")
             val title = MPVLib.getPropertyString("track-list/$i/title")
+            val codec = MPVLib.getPropertyString("track-list/$i/codec")
+            val codecDesc = MPVLib.getPropertyString("track-list/$i/codec-desc")
+            val formatName = MPVLib.getPropertyString("track-list/$i/format-name")
+            val hlsBitrate = MPVLib.getPropertyInt("track-list/$i/hls-bitrate")
+            val demuxSamplerate = MPVLib.getPropertyInt("track-list/$i/demux-samplerate")
+            val demuxBitrate = MPVLib.getPropertyInt("track-list/$i/demux-bitrate")
             val isSelected = MPVLib.getPropertyBoolean("track-list/$i/selected")
 
             val track = java.util.HashMap<String, Any?>().apply {
+                this["id"] = mpvId.toString()
                 this["selected"] = isSelected
+                this["supported"] = true
                 this["label"] = title
+                this["mimeType"] = codec
+                this["rate"] = demuxBitrate
+                this["averageBitrate"] = demuxSamplerate
+                this["name"] = lang
                 this["type"] = type
-                this["id"] = mpvId
             }
             tracksList.add(track)
         }
