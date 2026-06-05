@@ -81,8 +81,8 @@ task downloadDependencies {
     group = "build"
 
     def dependencyName = "lib-api-release.aar"
-    def dependencyVersion = "v0.0.8"
-    def dependencyMd5 = "d2e8d3dd6ff94a67e7f61edff01c4953"
+    def dependencyVersion = "v0.0.9"
+    def dependencyMd5 = "562fd1f2856dc879eb4295e141e43925"
     def dependencyUrl = "https://github.com/GhostenEditor/Ghosten-Player-flutter-packages/releases/download/$dependencyVersion/$dependencyName"
     def outputDir = file("$buildDir/output")
     def destination = file("$buildDir/cache/$dependencyName")
