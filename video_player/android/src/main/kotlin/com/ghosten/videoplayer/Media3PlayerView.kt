@@ -929,24 +929,24 @@ class Media3PlayerView(
     }
 
     override fun fullscreen(flag: Boolean) {
-        if (flag) {
-            (mNativeView.layoutParams as FrameLayout.LayoutParams).width =
-                FrameLayout.LayoutParams.MATCH_PARENT
-            (mNativeView.layoutParams as FrameLayout.LayoutParams).height =
-                FrameLayout.LayoutParams.MATCH_PARENT
-            (mNativeView.layoutParams as FrameLayout.LayoutParams).topMargin = 0
-            (mNativeView.layoutParams as FrameLayout.LayoutParams).leftMargin = 0
-            mNativeView.requestLayout()
-        } else {
-            if (width != null) (mNativeView.layoutParams as FrameLayout.LayoutParams).width = width
-            if (height != null) (mNativeView.layoutParams as FrameLayout.LayoutParams).height =
-                height
-            if (top != null) (mNativeView.layoutParams as FrameLayout.LayoutParams).topMargin = top
-            if (left != null) (mNativeView.layoutParams as FrameLayout.LayoutParams).leftMargin =
-                left
-            mNativeView.requestLayout()
-        }
-        isFullscreen = flag
+//        if (flag) {
+//            (mNativeView.layoutParams as FrameLayout.LayoutParams).width =
+//                FrameLayout.LayoutParams.MATCH_PARENT
+//            (mNativeView.layoutParams as FrameLayout.LayoutParams).height =
+//                FrameLayout.LayoutParams.MATCH_PARENT
+//            (mNativeView.layoutParams as FrameLayout.LayoutParams).topMargin = 0
+//            (mNativeView.layoutParams as FrameLayout.LayoutParams).leftMargin = 0
+//            mNativeView.requestLayout()
+//        } else {
+//            if (width != null) (mNativeView.layoutParams as FrameLayout.LayoutParams).width = width
+//            if (height != null) (mNativeView.layoutParams as FrameLayout.LayoutParams).height =
+//                height
+//            if (top != null) (mNativeView.layoutParams as FrameLayout.LayoutParams).topMargin = top
+//            if (left != null) (mNativeView.layoutParams as FrameLayout.LayoutParams).leftMargin =
+//                left
+//            mNativeView.requestLayout()
+//        }
+//        isFullscreen = flag
         setPictureInPictureParams()
     }
 

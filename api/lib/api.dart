@@ -13,7 +13,6 @@ class Api {
   static final initialized = ApiPlatform.instance.initialized;
   static final rollbackData = ApiPlatform.instance.rollbackData;
   static final resetData = ApiPlatform.instance.resetData;
-  static final setTmdbApiKey = ApiPlatform.instance.setTmdbApiKey;
   static final fileInfo = ApiPlatform.instance.fileInfo;
   static final fileList = ApiPlatform.instance.fileList;
   static final fileRename = ApiPlatform.instance.fileRename;
@@ -35,6 +34,7 @@ class Api {
   static final scheduleTaskPauseById = ApiPlatform.instance.scheduleTaskPauseById;
   static final scheduleTaskResumeById = ApiPlatform.instance.scheduleTaskResumeById;
   static final scheduleTaskDeleteById = ApiPlatform.instance.scheduleTaskDeleteById;
+  static final scheduleTaskEvent = ApiPlatform.instance.scheduleTaskEvent;
   static final sessionStatus = ApiPlatform.instance.sessionStatus;
   static final sessionCreate = ApiPlatform.instance.sessionCreate;
   static final dnsOverrideQueryAll = ApiPlatform.instance.dnsOverrideQueryAll;
@@ -54,14 +54,13 @@ class Api {
   static final playlistRefreshById = ApiPlatform.instance.playlistRefreshById;
   static final playlistChannelsQueryById = ApiPlatform.instance.playlistChannelsQueryById;
   static final epgQueryByChannelId = ApiPlatform.instance.epgQueryByChannelId;
-  static final driverQueryAll = ApiPlatform.instance.driverQueryAll;
-  static final driverInsert = ApiPlatform.instance.driverInsert;
-  static final driverSettingQueryById = ApiPlatform.instance.driverSettingQueryById;
-  static final driverSettingUpdateById = ApiPlatform.instance.driverSettingUpdateById;
-  static final driverDeleteById = ApiPlatform.instance.driverDeleteById;
+  static final storageQueryAll = ApiPlatform.instance.storageQueryAll;
+  static final storageInsert = ApiPlatform.instance.storageInsert;
+  static final storageSettingQueryById = ApiPlatform.instance.storageSettingQueryById;
+  static final storageSettingUpdateById = ApiPlatform.instance.storageSettingUpdateById;
+  static final storageDeleteById = ApiPlatform.instance.storageDeleteById;
   static final movieRecommendation = ApiPlatform.instance.movieRecommendation;
   static final movieQueryAll = ApiPlatform.instance.movieQueryAll;
-  static final movieQueryByFilter = ApiPlatform.instance.movieQueryByFilter;
   static final movieQueryById = ApiPlatform.instance.movieQueryById;
   static final movieNextToPlayQueryAll = ApiPlatform.instance.movieNextToPlayQueryAll;
   static final movieMetadataUpdateById = ApiPlatform.instance.movieMetadataUpdateById;
@@ -71,7 +70,6 @@ class Api {
   static final movieDeleteById = ApiPlatform.instance.movieDeleteById;
   static final tvRecommendation = ApiPlatform.instance.tvRecommendation;
   static final tvSeriesQueryAll = ApiPlatform.instance.tvSeriesQueryAll;
-  static final tvSeriesQueryByFilter = ApiPlatform.instance.tvSeriesQueryByFilter;
   static final tvSeriesQueryById = ApiPlatform.instance.tvSeriesQueryById;
   static final tvSeriesNextToPlayQueryAll = ApiPlatform.instance.tvSeriesNextToPlayQueryAll;
   static final tvSeriesScraperSearch = ApiPlatform.instance.tvSeriesScraperSearch;
@@ -83,6 +81,7 @@ class Api {
   static final tvSeasonQueryById = ApiPlatform.instance.tvSeasonQueryById;
   static final tvSeasonNumberUpdate = ApiPlatform.instance.tvSeasonNumberUpdate;
   static final tvSeasonDeleteById = ApiPlatform.instance.tvSeasonDeleteById;
+  static final tvEpisodeQueryAll = ApiPlatform.instance.tvEpisodeQueryAll;
   static final tvEpisodeQueryById = ApiPlatform.instance.tvEpisodeQueryById;
   static final tvEpisodeMetadataUpdateById = ApiPlatform.instance.tvEpisodeMetadataUpdateById;
   static final tvEpisodeDeleteById = ApiPlatform.instance.tvEpisodeDeleteById;
@@ -100,6 +99,7 @@ class Api {
   static final updatePlayedStatus = ApiPlatform.instance.updatePlayedStatus;
   static final setSkipTime = ApiPlatform.instance.setSkipTime;
   static final networkDiagnostics = ApiPlatform.instance.networkDiagnostics;
+  static final setTmdbApiKey = ApiPlatform.instance.setTmdbApiKey;
   static final dlnaDiscover = ApiPlatform.instance.dlnaDiscover;
   static final dlnaSetUri = ApiPlatform.instance.dlnaSetUri;
   static final dlnaPlay = ApiPlatform.instance.dlnaPlay;

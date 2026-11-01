@@ -75,7 +75,7 @@ class MPVPlayerView(
             mRootView.addView(this, 0)
             addObserver(this)
             mChannel.invokeMethod("isInitialized", null)
-
+            mRootView.keepScreenOn = true
             fullscreen(false)
         }
     }

@@ -1,15 +1,35 @@
 // ignore_for_file: avoid_dynamic_calls
 
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
+import 'package:msgpack_dart/msgpack_dart.dart';
 
 import 'enums.dart';
 
-class SortConfig {
-  const SortConfig({this.filter, required this.type, required this.direction});
+// class SortConfig {
+//   const SortConfig({this.filter, required this.type, required this.direction});
+//
+//   final FilterType? filter;
+//   final SortType type;
+//   final SortDirection direction;
+// }
 
-  final FilterType? filter;
-  final SortType type;
-  final SortDirection direction;
+class SearchQuery {
+  const SearchQuery({this.limit, this.offset, this.search});
+
+  final int? limit;
+  final int? offset;
+  final String? search;
+
+  Map<String, dynamic> toMap() {
+    return {'search': search, 'offset': offset, 'limit': limit};
+  }
+
+  MediaSearchQuery copyWith({int? limit, int? offset, String? search}) {
+    return MediaSearchQuery(limit: limit ?? this.limit, offset: offset ?? this.offset, search: search ?? this.search);
+  }
 }
 
 class MediaSearchQuery {
@@ -56,6 +76,36 @@ class MediaSearchQuery {
       'media_cast': mediaCast,
       'media_crew': mediaCrew,
     };
+  }
+
+  MediaSearchQuery copyWith({
+    SortType? sort,
+    SortDirection? direction,
+    int? limit,
+    int? offset,
+    bool? watched,
+    bool? favorite,
+    String? search,
+    List<dynamic>? genres,
+    List<dynamic>? studios,
+    List<dynamic>? keywords,
+    List<dynamic>? mediaCast,
+    List<dynamic>? mediaCrew,
+  }) {
+    return MediaSearchQuery(
+      sort: sort ?? this.sort,
+      direction: direction ?? this.direction,
+      limit: limit ?? this.limit,
+      offset: offset ?? this.offset,
+      watched: watched ?? this.watched,
+      favorite: favorite ?? this.favorite,
+      search: search ?? this.search,
+      genres: genres ?? this.genres,
+      studios: studios ?? this.studios,
+      keywords: keywords ?? this.keywords,
+      mediaCast: mediaCast ?? this.mediaCast,
+      mediaCrew: mediaCrew ?? this.mediaCrew,
+    );
   }
 }
 
@@ -404,23 +454,23 @@ class Studio extends Equatable {
 }
 
 class SubtitleData {
-  const SubtitleData({this.id, this.url, this.mimeType, this.label, this.language, this.selected = false});
+  const SubtitleData({this.id, this.url, required this.mimeType, this.label, this.language, this.selected = false});
 
   SubtitleData.fromJson(dynamic json)
     : id = json[0],
       url = json[1],
       label = json[2],
-      mimeType = json[3],
+      mimeType = SubtitleType.values.elementAt(json[3]),
       language = json[4],
       selected = json[5];
   final dynamic id;
   final String? url;
   final String? label;
   final String? language;
-  final String? mimeType;
+  final SubtitleType mimeType;
   final bool selected;
 
-  static const SubtitleData empty = SubtitleData();
+  static const SubtitleData empty = SubtitleData(mimeType: SubtitleType.srt);
 }
 
 class Library {
@@ -491,8 +541,8 @@ class Channel {
 
 class ChannelEpgItem {
   ChannelEpgItem.fromJson(dynamic json)
-    : start = epgTimeToDateTime(json[0]),
-      stop = epgTimeToDateTime(json[1]),
+    : start = (json[0] as String).toDateTime()!,
+      stop = (json[1] as String).toDateTime()!,
       title = json[2];
   DateTime? start;
   DateTime? stop;
@@ -550,6 +600,9 @@ class DriverAccount {
       type = DriverType.values.elementAt(json[1]),
       name = json[2],
       avatar = json[3];
+
+  DriverAccount.local() : id = 0, type = DriverType.local, name = 'Local';
+
   int id;
   DriverType type;
   String name;
@@ -562,8 +615,8 @@ class DriverFileInfo {
       size = json[1],
       driverType = DriverType.values.elementAt(json[2]),
       createdAt = (json[3] as String).toDateTime()!;
-  final String filename;
-  final int size;
+  final String? filename;
+  final int? size;
   final DriverType driverType;
   final DateTime createdAt;
 }
@@ -580,6 +633,19 @@ class DriverFile {
       updatedAt = (json[7] as String?)?.toDateTime(),
       size = json[8],
       url = json[9] != null ? Uri.tryParse(json[9]) : null;
+
+  DriverFile.fromLocalDir(String path)
+    : name = path,
+      category = null,
+      id = path,
+      parentId = (path.split('/')..removeLast()).join('/'),
+      fileId = path,
+      type = .folder,
+      createdAt = null,
+      updatedAt = null,
+      size = null,
+      url = null;
+
   final String name;
   final String id;
   final String parentId;
@@ -655,13 +721,15 @@ class ScheduleTask {
       pid = json[2],
       type = ScheduleTaskType.values.elementAt(json[3]),
       status = ScheduleTaskStatus.values.elementAt(json[4]),
-      data = json[5];
+      data = (json[5] as List<dynamic>).isNotEmpty
+          ? deserialize(Uint8List.fromList((json[5] as List<dynamic>).cast()))
+          : [];
   final int id;
   final int rid;
   final int? pid;
   final ScheduleTaskType type;
   final ScheduleTaskStatus status;
-  final dynamic data;
+  final List<dynamic> data;
 }
 
 class SettingScraper {
@@ -730,11 +798,14 @@ class NetworkDiagnostics extends Equatable {
 }
 
 class PageData<D> {
+  const PageData() : offset = 0, limit = 0, count = 0, data = const [];
+
   PageData.fromJson(dynamic json, D Function(dynamic) itemFromJson)
     : offset = json[0],
       limit = json[1],
       count = json[2],
       data = (json[3] as List).map(itemFromJson).toList();
+
   final int offset;
   final int limit;
   final int count;
@@ -744,6 +815,52 @@ class PageData<D> {
 class IdResponse {
   IdResponse.fromJson(dynamic json) : id = json[0];
   final dynamic id;
+}
+
+List<T> listFromJson<T>(List<dynamic>? data, T Function(dynamic) converter) {
+  return List.generate(data?.length ?? 0, (index) => converter(data![index]));
+}
+
+class EventDispatcher {
+  static final _controller = StreamController<EventData>();
+  static final _stream = _controller.stream.asBroadcastStream();
+
+  static void add(EventType type, EventSubType subType, [dynamic id]) {
+    _controller.add(EventData(type, subType, id));
+  }
+
+  static Stream<EventData> where({EventType? type, EventSubType? subType, dynamic id}) {
+    var stream = _stream;
+    if (type != null) {
+      stream = stream.where((data) => data.type == type);
+    }
+    if (subType != null) {
+      stream = stream.where((data) => data.subType == subType);
+    }
+    if (id != null) {
+      stream = stream.where((data) => data.id == id);
+    }
+    return stream;
+  }
+}
+
+class EventData {
+  const EventData(this.type, this.subType, [this.id]);
+
+  final EventType type;
+  final EventSubType subType;
+  final dynamic id;
+}
+
+class ScheduleTaskEventData {
+  ScheduleTaskEventData.fromJson(dynamic json)
+    : type = ScheduleTaskEventType.values.elementAt(json[0]),
+      subType = ScheduleTaskEventStatus.values.elementAt(json[1]),
+      data = deserialize(Uint8List.fromList((json[2] as List).cast()));
+
+  final ScheduleTaskEventType type;
+  final ScheduleTaskEventStatus subType;
+  final dynamic data;
 }
 
 extension on int? {
@@ -762,17 +879,4 @@ extension on List<int> {
   DateTime? toDateTime() {
     return DateTime(this[0], 1, this[1]);
   }
-}
-
-DateTime? epgTimeToDateTime(String? s) {
-  if (s == null) {
-    return null;
-  } else {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, int.parse(s.substring(0, 2)), int.parse(s.substring(3, 5)));
-  }
-}
-
-List<T> listFromJson<T>(List<dynamic>? data, T Function(dynamic) converter) {
-  return List.generate(data?.length ?? 0, (index) => converter(data![index]));
 }

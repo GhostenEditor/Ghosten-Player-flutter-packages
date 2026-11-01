@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'player_platform_interface.dart';
 
 class MethodChannelPlayer extends PlayerPlatform {
-  MethodChannelPlayer();
-
   final MethodChannel _channel = const MethodChannel('com.ghosten.player/player');
 
   @override
@@ -70,11 +68,6 @@ class MethodChannelPlayer extends PlayerPlatform {
   @override
   Future<String?> getVideoThumbnail(int position) {
     return _channel.invokeMethod('getVideoThumbnail', {'position': position});
-  }
-
-  @override
-  Future<String?> getLocalIpAddress() {
-    return _channel.invokeMethod('getLocalIpAddress');
   }
 
   @override

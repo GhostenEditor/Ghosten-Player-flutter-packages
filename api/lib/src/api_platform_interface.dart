@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:msgpack_dart/msgpack_dart.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:rxdart/rxdart.dart';
 
 import 'api_method_channel.dart';
 import 'enums.dart';
@@ -26,13 +29,13 @@ abstract class ApiPlatform extends PlatformInterface {
 
   abstract final ApiClient client;
 
-  abstract Uri baseUrl;
+  Uri baseUrl = Uri(scheme: 'http', host: '127.0.0.1');
 
   Future<String?> databasePath() {
     throw UnimplementedError('databasePath() has not been implemented.');
   }
 
-  Future<bool?> initialized() async => true;
+  Future<bool> initialized() async => false;
 
   Future<void> syncData(String filePath) {
     return client.post('/data/sync', data: {'path': filePath});
@@ -110,7 +113,9 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<void> subtitleDeleteById(dynamic id) {
-    return client.delete('/subtitle/delete/id', data: {'id': id});
+    return client
+        .delete('/subtitle/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.subtitle, .delete, id));
   }
 
   /// Subtitle End
@@ -169,6 +174,12 @@ abstract class ApiPlatform extends PlatformInterface {
     return client.delete('/schedule/task/delete/id', data: {'id': id});
   }
 
+  Stream<ScheduleTaskEventData> scheduleTaskEvent() {
+    return streamWithCallback<ScheduleTaskEventData, dynamic>(client.post('/schedule/task/event'), (data) {
+      return ScheduleTaskEventData.fromJson(data);
+    });
+  }
+
   /// ScheduleTask End
 
   /// Session Start
@@ -222,24 +233,26 @@ abstract class ApiPlatform extends PlatformInterface {
     String? userPassword,
     String? userAgent,
   }) {
-    return client.put(
-      '/server/insert',
-      data: {
-        'type': type.index,
-        'host': host.trim(),
-        'username': username.trim(),
-        'userPassword': userPassword?.trim(),
-        'userAgent': (userAgent?.isNotEmpty ?? false) ? userAgent : null,
-      },
-    );
+    return client
+        .put(
+          '/server/insert',
+          data: {
+            'type': type.index,
+            'host': host.trim(),
+            'username': username.trim(),
+            'userPassword': userPassword?.trim(),
+            'userAgent': (userAgent?.isNotEmpty ?? false) ? userAgent : null,
+          },
+        )
+        .onSuccess((_) => EventDispatcher.add(.server, .add));
   }
 
   Future<void> serverActiveById(int id) {
-    return client.post('/server/active/id', data: {'id': id});
+    return client.post('/server/active/id', data: {'id': id}).onSuccess((_) => EventDispatcher.add(.server, .update));
   }
 
   Future<void> serverDeleteById(int id) {
-    return client.delete('/server/delete/id', data: {'id': id});
+    return client.delete('/server/delete/id', data: {'id': id}).onSuccess((_) => EventDispatcher.add(.server, .delete));
   }
 
   /// Server End
@@ -264,19 +277,27 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<void> playlistInsert(String url, String? title) {
-    return client.put('/playlist/insert', data: {'url': url, 'title': title});
+    return client
+        .put('/playlist/insert', data: {'url': url, 'title': title})
+        .onSuccess((_) => EventDispatcher.add(.playlist, .add));
   }
 
   Future<void> playlistUpdateById(int id, String url, String? title) {
-    return client.post('/playlist/update/id', data: {'id': id, 'url': url, 'title': title});
+    return client
+        .post('/playlist/update/id', data: {'id': id, 'url': url, 'title': title})
+        .onSuccess((_) => EventDispatcher.add(.playlist, .update, id));
   }
 
   Future<void> playlistDeleteById(int id) {
-    return client.delete('/playlist/delete/id', data: {'id': id});
+    return client
+        .delete('/playlist/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.playlist, .delete, id));
   }
 
   Future<void> playlistRefreshById(int id) {
-    return client.post('/playlist/refresh/id', data: {'id': id});
+    return client
+        .post('/playlist/refresh/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.playlist, .update, id));
   }
 
   Future<List<Channel>> playlistChannelsQueryById(int id) async {
@@ -292,33 +313,32 @@ abstract class ApiPlatform extends PlatformInterface {
   /// Playlist End
 
   /// Driver Start
-  Future<List<DriverAccount>> driverQueryAll() async {
+  Future<List<DriverAccount>> storageQueryAll() async {
     final data = await client.get('/storage/query/all');
     return listFromJson(data, DriverAccount.fromJson);
   }
 
-  Stream<dynamic> driverInsert(DriverType type, {String? url, String? username, String? password, String? token}) {
+  Stream<dynamic> storageInsert(DriverType type, dynamic data) {
     return streamWithCallback<dynamic, dynamic>(
-      client.put(
-        '/storage/insert/cb',
-        data: {'type': type.index, 'url': url, 'username': username, 'password': password, 'token': token},
-      ),
+      client.put('/storage/insert', data: {'type': type.index, 'data': data}),
       (data) => data,
-    );
+    ).doOnDone(() => EventDispatcher.add(.storage, .add));
   }
 
-  Future<Map<String, dynamic>> driverSettingQueryById(int id) {
+  Future<List<dynamic>> storageSettingQueryById(int id) {
     return client
-        .get<Map<String, dynamic>>('/storage/setting/query/id', queryParameters: {'id': id})
-        .then((data) => data!);
+        .get('/storage/setting/query/id', queryParameters: {'id': id})
+        .then((data) => deserialize(Uint8List.fromList((data as List).cast<int>())));
   }
 
-  Future<void> driverSettingUpdateById(int id, Map<String, dynamic> settings) {
+  Future<void> storageSettingUpdateById(int id, List<dynamic> settings) {
     return client.post('/storage/setting/update/id', data: {'id': id, 'settings': settings});
   }
 
-  Future<void> driverDeleteById(int id) {
-    return client.delete('/storage/delete/id', data: {'id': id});
+  Future<void> storageDeleteById(int id) {
+    return client
+        .delete('/storage/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.storage, .delete, id));
   }
 
   /// Driver End
@@ -330,13 +350,8 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<PageData<Movie>> movieQueryAll([MediaSearchQuery? query]) async {
-    final data = await client.get('/movie/query/all', queryParameters: query?.toMap());
+    final data = await client.post('/movie/query/all', data: query?.toMap());
     return PageData.fromJson(data, Movie.fromJson);
-  }
-
-  Future<List<Movie>> movieQueryByFilter(QueryType type, dynamic id) async {
-    final data = await client.get('/movie/query/filter', queryParameters: {'id': id, 'type': type.index});
-    return listFromJson(data, Movie.fromJson);
   }
 
   Future<Movie> movieQueryById(dynamic id) async {
@@ -350,21 +365,30 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<void> movieMetadataUpdateById(Map<String, dynamic> data) {
-    return client.post('/movie/metadata/update/id', data: data);
+    return client
+        .post('/movie/metadata/update/id', data: data)
+        .onSuccess((_) => EventDispatcher.add(.movie, .update, data['id']));
   }
 
-  Future<void> movieScraperById(dynamic id, String scraperId, ScraperType scraperType, String? scraperLang) {
-    return client.post(
-      '/movie/scraper/id',
-      data: {'id': id, 'scraperType': scraperType.index, 'scraperId': scraperId, 'scraperLang': scraperLang},
-    );
+  Future<void> movieScraperById(
+    dynamic id,
+    String scraperId,
+    ScraperType scraperType,
+    SupportedLanguages? scraperLang,
+  ) {
+    return client
+        .post(
+          '/movie/scraper/id',
+          data: {'id': id, 'scraperType': scraperType.index, 'scraperId': scraperId, 'scraperLang': scraperLang?.index},
+        )
+        .onSuccess((_) => EventDispatcher.add(.movie, .update, id));
   }
 
   Future<List<SearchResult>> movieScraperSearch(
     dynamic id,
     String title, {
     SupportedLanguages? language,
-    String? year,
+    int? year,
   }) async {
     final data = await client.get(
       '/movie/scraper/search',
@@ -378,7 +402,9 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<void> movieDeleteById(dynamic id) {
-    return client.delete('/movie/delete/id', data: {'id': id});
+    return client
+        .delete('/movie/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.movie, .delete, id));
   }
 
   /// Movie End
@@ -391,13 +417,8 @@ abstract class ApiPlatform extends PlatformInterface {
 
   /// TV Series Start
   Future<PageData<TVSeries>> tvSeriesQueryAll([MediaSearchQuery? query]) async {
-    final data = await client.get('/tv/series/query/all', queryParameters: query?.toMap());
+    final data = await client.post('/tv/series/query/all', data: query?.toMap());
     return PageData.fromJson(data, TVSeries.fromJson);
-  }
-
-  Future<List<TVSeries>> tvSeriesQueryByFilter(QueryType type, dynamic id) async {
-    final data = await client.get('/tv/series/query/filter', queryParameters: {'id': id, 'type': type.index});
-    return listFromJson(data, TVSeries.fromJson);
   }
 
   Future<TVSeries> tvSeriesQueryById(dynamic id) async {
@@ -410,18 +431,25 @@ abstract class ApiPlatform extends PlatformInterface {
     return listFromJson(data, TVEpisode.fromJson);
   }
 
-  Future<void> tvSeriesScraperById(dynamic id, String scraperId, ScraperType scraperType, String? language) {
-    return client.post(
-      '/tv/series/scraper/id',
-      data: {'id': id, 'scraperType': scraperType.index, 'scraperId': scraperId, 'scraperLang': language},
-    );
+  Future<void> tvSeriesScraperById(
+    dynamic id,
+    String scraperId,
+    ScraperType scraperType,
+    SupportedLanguages? language,
+  ) {
+    return client
+        .post(
+          '/tv/series/scraper/id',
+          data: {'id': id, 'scraperType': scraperType.index, 'scraperId': scraperId, 'scraperLang': language?.index},
+        )
+        .onSuccess((_) => EventDispatcher.add(.series, .update, id));
   }
 
   Future<List<SearchResult>> tvSeriesScraperSearch(
     dynamic id,
     String title, {
     SupportedLanguages? language,
-    String? year,
+    int? year,
   }) async {
     final data = await client.get(
       '/tv/series/scraper/search',
@@ -431,11 +459,15 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<void> tvSeriesSyncById(dynamic id) {
-    return client.post('/tv/series/sync/id', data: {'id': id});
+    return client
+        .post('/tv/series/sync/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.series, .update, id));
   }
 
   Future<void> tvSeriesMetadataUpdateById(Map<String, dynamic> data) {
-    return client.post('/tv/series/metadata/update/id', data: data);
+    return client
+        .post('/tv/series/metadata/update/id', data: data)
+        .onSuccess((_) => EventDispatcher.add(.series, .update, data['id']));
   }
 
   Future<void> tvSeriesRenameById(dynamic id) {
@@ -443,7 +475,9 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<void> tvSeriesDeleteById(dynamic id) {
-    return client.delete('/tv/series/delete/id', data: {'id': id});
+    return client
+        .delete('/tv/series/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.series, .delete, id));
   }
 
   /// TV Series End
@@ -454,29 +488,42 @@ abstract class ApiPlatform extends PlatformInterface {
     return TVSeason.fromJson(data);
   }
 
-  Future<int> tvSeasonNumberUpdate(TVSeason season, int seasonNum) async {
-    final data = await client.post('/tv/season/number/update', data: {'id': season.id, 'season': seasonNum});
-    return IdResponse.fromJson(data).id;
+  Future<dynamic> tvSeasonNumberUpdate(TVSeason season, int seasonNum) {
+    return client
+        .post('/tv/season/number/update', data: {'id': season.id, 'season': seasonNum})
+        .then((data) => IdResponse.fromJson(data).id)
+        .onSuccess((id) => EventDispatcher.add(.season, season.id ? .update : .delete, season.id));
   }
 
   Future<void> tvSeasonDeleteById(dynamic id) {
-    return client.post('/tv/season/delete/id', data: {'id': id});
+    return client
+        .delete('/tv/season/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.season, .delete, id));
   }
 
   /// TV Season End
 
   /// TV Episode Start
+  Future<PageData<TVEpisode>> tvEpisodeQueryAll([SearchQuery? query]) async {
+    final data = await client.post('/tv/episode/query/all', data: query?.toMap());
+    return PageData.fromJson(data, TVEpisode.fromJson);
+  }
+
   Future<TVEpisode> tvEpisodeQueryById(dynamic id) async {
     final data = await client.get('/tv/episode/query/id', queryParameters: {'id': id});
     return TVEpisode.fromJson(data);
   }
 
   Future<void> tvEpisodeMetadataUpdateById(Map<String, dynamic> data) {
-    return client.post('/tv/episode/metadata/update/id', data: data);
+    return client
+        .post('/tv/episode/metadata/update/id', data: data)
+        .onSuccess((_) => EventDispatcher.add(.episode, .update, data['id']));
   }
 
   Future<void> tvEpisodeDeleteById(dynamic id) {
-    return client.delete('/tv/episode/delete/id', data: {'id': id});
+    return client
+        .delete('/tv/episode/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.episode, .delete, id));
   }
 
   /// TV Episode End
@@ -496,19 +543,19 @@ abstract class ApiPlatform extends PlatformInterface {
     required String filename,
   }) {
     return client
-        .put(
-          '/library/insert',
-          data: {'type': type.index, 'driverId': driverId, 'id': id, 'parentId': parentId, 'filename': filename},
-        )
-        .then((data) => IdResponse.fromJson(data).id);
+        .put('/library/insert', data: {'type': type.index, 'driverId': driverId, 'id': id})
+        .then((data) => IdResponse.fromJson(data).id)
+        .onSuccess((_) => EventDispatcher.add(.library, .add));
   }
 
-  Future<void> libraryRefreshById(dynamic id, bool incremental) {
-    return client.post('/library/refresh/id', data: {'id': id, 'incremental': incremental});
+  Future<void> libraryRefreshById(dynamic id, SupportedLanguages language) {
+    return client.post('/library/refresh/id', data: {'id': id, 'language': language.index});
   }
 
   Future<void> libraryDeleteById(dynamic id) {
-    return client.delete('/library/delete/id', data: {'id': id});
+    return client
+        .delete('/library/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.library, .delete, id));
   }
 
   /// Library End
@@ -529,22 +576,48 @@ abstract class ApiPlatform extends PlatformInterface {
     return listFromJson(data, Keyword.fromJson);
   }
 
-  Future<List<MediaCast>> castQueryAll() async {
-    final data = await client.get('/cast/query/all');
-    return listFromJson(data, MediaCast.fromJson);
+  Future<PageData<MediaCast>> castQueryAll([SearchQuery? query]) async {
+    final data = await client.get('/cast/query/all', queryParameters: query?.toMap());
+    return PageData.fromJson(data, MediaCast.fromJson);
   }
 
-  Future<List<MediaCrew>> crewQueryAll() async {
-    final data = await client.get('/crew/query/all');
-    return listFromJson(data, MediaCrew.fromJson);
+  Future<PageData<MediaCrew>> crewQueryAll([SearchQuery? query]) async {
+    final data = await client.get('/crew/query/all', queryParameters: query?.toMap());
+    return PageData.fromJson(data, MediaCrew.fromJson);
   }
 
   Future<void> markWatched(MediaType type, dynamic id, bool watched) {
-    return client.post('/markWatched/update', data: {'id': id, 'marked': watched, 'type': type.index});
+    return client
+        .post('/markWatched/update', data: {'id': id, 'marked': watched, 'type': type.index})
+        .onSuccess(
+          (_) => EventDispatcher.add(
+            switch (type) {
+              MediaType.movie => .movie,
+              MediaType.series => .series,
+              MediaType.season => .season,
+              MediaType.episode => .episode,
+            },
+            .update,
+            id,
+          ),
+        );
   }
 
   Future<void> markFavorite(MediaType type, dynamic id, bool favorite) {
-    return client.post('/markFavorite/update', data: {'id': id, 'marked': favorite, 'type': type.index});
+    return client
+        .post('/markFavorite/update', data: {'id': id, 'marked': favorite, 'type': type.index})
+        .onSuccess(
+          (_) => EventDispatcher.add(
+            switch (type) {
+              MediaType.movie => .movie,
+              MediaType.series => .series,
+              MediaType.season => .season,
+              MediaType.episode => .episode,
+            },
+            .update,
+            id,
+          ),
+        );
   }
 
   Future<void> updatePlayedStatus(
@@ -576,9 +649,10 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Stream<NetworkDiagnostics> networkDiagnostics() {
-    return streamWithCallback<NetworkDiagnostics, dynamic>(client.post('/network/diagnostics/cb'), (data) {
-      return NetworkDiagnostics.fromJson(data);
-    });
+    return streamWithCallback<NetworkDiagnostics, dynamic>(
+      client.post('/network/diagnostics'),
+      (data) => NetworkDiagnostics.fromJson(data),
+    );
   }
 
   Future<void> setTmdbApiKey(String key) {
@@ -589,9 +663,7 @@ abstract class ApiPlatform extends PlatformInterface {
 
   /// Cast Start
   Stream<List<dynamic>> dlnaDiscover() {
-    return streamWithCallback<List<dynamic>, List<dynamic>>(client.post('/dlna/discover/cb'), (data) {
-      return data;
-    });
+    return streamWithCallback<List<dynamic>, List<dynamic>>(client.post('/dlna/discover'), (data) => data);
   }
 
   Future<void> dlnaSetUri(String id, Uri uri, {String? title, required String playType}) {
@@ -675,4 +747,20 @@ abstract class ApiClient {
   Future<T?> put<T>(String path, {Object? data});
 
   Future<T?> delete<T>(String path, {Object? data});
+}
+
+extension FutureX<T> on Future<T> {
+  Future<T> onSuccess(void Function(T value) action) {
+    return then((value) {
+      action(value);
+      return value;
+    });
+  }
+
+  Future<T> onError(void Function(Object error, StackTrace st) action) {
+    return catchError((Object e, StackTrace st) {
+      action(e, st);
+      throw Exception(e);
+    });
+  }
 }

@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:msgpack_dart/msgpack_dart.dart';
 
@@ -21,7 +20,7 @@ class ApiWeb extends ApiPlatform {
   late final Client client = Client(baseUrl);
 
   @override
-  Uri baseUrl = Uri();
+  Future<bool> initialized() async => true;
 
   @override
   Stream<T> streamWithCallback<T, D>(Future<dynamic> future, T Function(D) callback) async* {
@@ -32,71 +31,77 @@ class ApiWeb extends ApiPlatform {
 
 class Client extends ApiClient {
   Client(Uri baseUrl) {
-    _client = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 10),
-          baseUrl: baseUrl.toString(),
-          responseType: ResponseType.bytes,
-          validateStatus: (status) => status != null && status >= 200 && status < 300 || status == 304,
-        ),
-      )
-      ..interceptors.add(
-        InterceptorsWrapper(
-          onRequest: (options, handler) {
-            final data =
-                (options.method != 'GET' && options.data != null)
+    _client =
+        Dio(
+            BaseOptions(
+              connectTimeout: const Duration(seconds: 10),
+              baseUrl: baseUrl.toString(),
+              responseType: ResponseType.bytes,
+              validateStatus: (status) => status != null && status >= 200 && status < 300 || status == 304,
+            ),
+          )
+          ..interceptors.add(
+            InterceptorsWrapper(
+              onRequest: (options, handler) {
+                final data = (options.method != 'GET' && options.data != null)
                     ? serialize((options.data as Map<String, dynamic>).values)
                     : null;
-            handler.next(
-              options
-                // ..headers.putIfAbsent('Content-Type', () => 'application/msgpack')
-                ..headers.putIfAbsent(
-                  'Accept-Language',
-                  () => Localizations.localeOf(navigatorKey.currentContext!).languageCode,
-                )
-                ..responseType =
-                    (options.uri.path == '/dlna/discover/cb' || options.uri.path == '/network/diagnostics/cb')
-                        ? ResponseType.stream
-                        : ResponseType.bytes
-                ..data = data
-                ..queryParameters.removeWhere((_, v) => v == null),
-            );
-          },
-          onResponse: (response, handler) {
-            if (response.requestOptions.responseType == ResponseType.bytes) {
-              final data = (response.data as Uint8List).isNotEmpty ? deserialize(response.data!) : null;
-              handler.next(response..data = data);
-            } else {
-              handler.next(response);
-            }
-          },
-          onError: (error, handler) {
-            handler.reject(switch (error.type) {
-              DioExceptionType.connectionTimeout ||
-              DioExceptionType.sendTimeout ||
-              DioExceptionType.receiveTimeout => DioException(
-                requestOptions: error.requestOptions,
-                response: Response(
-                  requestOptions: error.requestOptions,
-                  statusCode: 40800,
-                  data: '',
-                  statusMessage: error.response?.statusMessage,
-                ),
-              ),
-              DioExceptionType.badCertificate ||
-              DioExceptionType.badResponse ||
-              DioExceptionType.cancel ||
-              DioExceptionType.connectionError ||
-              DioExceptionType.unknown =>
-                error
-                  ..response?.data = utf8.decode(error.response?.data)
-                  ..response?.statusCode =
-                      (int.tryParse(error.response?.headers.value('Error-Code') ?? '') ??
+                handler.next(
+                  options
+                    ..contentType = 'application/msgpack'
+                    ..headers.putIfAbsent(
+                      'Accept-Language',
+                      () => navigatorKey.currentContext != null
+                          ? Localizations.localeOf(navigatorKey.currentContext!).languageCode
+                          : null,
+                    )
+                    ..responseType = switch (options.uri.path) {
+                      '/dlna/discover/cb' ||
+                      '/network/diagnostics/cb' ||
+                      '/storage/insert/cb' ||
+                      '/schedule/task/event' => ResponseType.stream,
+                      _ => ResponseType.bytes,
+                    }
+                    ..data = data
+                    ..queryParameters.removeWhere((_, v) => v == null),
+                );
+              },
+              onResponse: (response, handler) {
+                if (response.requestOptions.responseType == ResponseType.bytes) {
+                  final data = (response.data as Uint8List).isNotEmpty ? deserialize(response.data!) : null;
+                  handler.next(response..data = data);
+                } else {
+                  handler.next(response);
+                }
+              },
+              onError: (error, handler) {
+                handler.reject(switch (error.type) {
+                  DioExceptionType.connectionTimeout ||
+                  DioExceptionType.sendTimeout ||
+                  DioExceptionType.receiveTimeout ||
+                  DioExceptionType.transformTimeout => DioException(
+                    requestOptions: error.requestOptions,
+                    response: Response(
+                      requestOptions: error.requestOptions,
+                      statusCode: 40800,
+                      data: '',
+                      statusMessage: error.response?.statusMessage,
+                    ),
+                  ),
+                  DioExceptionType.badCertificate ||
+                  DioExceptionType.badResponse ||
+                  DioExceptionType.cancel ||
+                  DioExceptionType.connectionError ||
+                  DioExceptionType.unknown =>
+                    error
+                      ..response?.data = utf8.decode(error.response?.data)
+                      ..response?.statusCode =
+                          (int.tryParse(error.response?.headers.value('Error-Code') ?? '') ??
                           (error.response?.statusCode ?? 0) * 100),
-            });
-          },
-        ),
-      );
+                });
+              },
+            ),
+          );
   }
 
   late final Dio _client;

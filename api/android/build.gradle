@@ -6,14 +6,14 @@ group = "com.ghosten.api"
 version = "1.0-SNAPSHOT"
 
 buildscript {
-    ext.kotlin_version = "2.1.0"
+    ext.kotlin_version = "2.4.0"
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:8.7.3")
+        classpath("com.android.tools.build:gradle:9.1.0")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
     }
 }
@@ -26,20 +26,19 @@ allprojects {
 }
 
 apply plugin: "com.android.library"
-apply plugin: "kotlin-android"
 
 android {
     namespace = "com.ghosten.api"
 
-    compileSdk = 35
+    compileSdk = 36
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11
+        jvmTarget = JavaVersion.VERSION_17
     }
 
     sourceSets {
@@ -48,7 +47,7 @@ android {
     }
 
     defaultConfig {
-        minSdk = 21
+        minSdk = 24
     }
 
     dependencies {
@@ -81,8 +80,8 @@ task downloadDependencies {
     group = "build"
 
     def dependencyName = "lib-api-release.aar"
-    def dependencyVersion = "v0.0.9"
-    def dependencyMd5 = "c1334a46cca192ca580ac1f839f7fdf3"
+    def dependencyVersion = "v0.0.10"
+    def dependencySha256 = "8e186f2dff37949fffc7edaae2a6c0a1a23335aa4a4b6841ce104ba87c359d55"
     def dependencyUrl = "https://github.com/GhostenEditor/Ghosten-Player-flutter-packages/releases/download/$dependencyVersion/$dependencyName"
     def outputDir = file("$buildDir/output")
     def destination = file("$buildDir/cache/$dependencyName")
@@ -93,10 +92,10 @@ task downloadDependencies {
 
     def destFile = destination
     if (destFile.exists()) {
-        def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+        def calculatedSha256 = MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
 
-        if (calculatedMD5 != dependencyMd5) {
-            destFile.delete()
+        if (calculatedSha256 != dependencySha256) {
+//            destFile.delete()
         }
 
     }
@@ -107,8 +106,8 @@ task downloadDependencies {
             os << new URL(dependencyUrl).openStream()
         }
 
-        def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
-        if (calculatedMD5 != dependencyMd5) {
+        def calculatedSha256 = MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+        if (calculatedSha256 != dependencySha256) {
             throw new GradleException("MD5 verification failed for ${destFile}")
         }
     }

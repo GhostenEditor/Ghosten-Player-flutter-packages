@@ -23,7 +23,7 @@ class Bluetooth {
   static Stream<BluetoothDevice> startServer() async* {
     await methodChannel.invokeMethod('startServer');
     late StreamSubscription<dynamic> subscription;
-    final controller = StreamController(
+    final controller = StreamController<dynamic>(
       onCancel: () {
         subscription.cancel();
       },
@@ -50,7 +50,7 @@ class Bluetooth {
   }
 
   static Future<List<BluetoothDevice>> getBondedDevices() async {
-    final data = await methodChannel.invokeMethod<List<dynamic>>('getBondedDevices');
+    final List<dynamic>? data = await methodChannel.invokeMethod('getBondedDevices');
     return data!.map((e) => BluetoothDevice.fromMap(e)).toList();
   }
 
@@ -64,7 +64,7 @@ class Bluetooth {
   static Stream<BluetoothDevice> startDiscovery() async* {
     await methodChannel.invokeMethod('startDiscovery');
     late StreamSubscription<dynamic> subscription;
-    final controller = StreamController(
+    final controller = StreamController<dynamic>(
       onCancel: () {
         subscription.cancel();
       },
@@ -81,7 +81,7 @@ class Bluetooth {
 
   static Stream<BluetoothMessage> connection() async* {
     late StreamSubscription<dynamic> subscription;
-    final controller = StreamController(
+    final controller = StreamController<dynamic>(
       onCancel: () {
         subscription.cancel();
       },
@@ -105,7 +105,7 @@ class Bluetooth {
   }
 
   static Stream<double> writeFile(String path) async* {
-    final id = await methodChannel.invokeMethod<String>('writeFile', path);
+    final String? id = await methodChannel.invokeMethod('writeFile', path);
     if (id != null) {
       final eventChannel = EventChannel('$namespace/update/$id');
       yield* eventChannel.receiveBroadcastStream(id).map((d) => d as double);

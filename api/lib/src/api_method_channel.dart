@@ -16,13 +16,10 @@ class MethodChannelApi extends ApiPlatform {
   late final ApiClient client = Client(_methodChannel);
 
   @override
-  Uri baseUrl = Uri(scheme: 'http', host: '127.0.0.1');
-
-  @override
   Future<String?> databasePath() => _methodChannel.invokeMethod<String>('databasePath');
 
   @override
-  Future<bool?> initialized() async {
+  Future<bool> initialized() async {
     final port = await _methodChannel.invokeMethod<int>('initialized');
     if (port != null) {
       baseUrl = baseUrl.replace(port: port);
@@ -37,7 +34,10 @@ class MethodChannelApi extends ApiPlatform {
   Future<SessionCreate> sessionCreate() async {
     final data = await super.sessionCreate();
     final ip = await _methodChannel.invokeMethod<String>('getLocalIpAddress');
-    return SessionCreate(id: data.id, uri: data.uri.replace(host: ip));
+    return SessionCreate(
+      id: data.id,
+      uri: data.uri.replace(host: ip),
+    );
   }
 
   /// Session End
@@ -48,7 +48,7 @@ class MethodChannelApi extends ApiPlatform {
   Stream<T> streamWithCallback<T, D>(Future<dynamic> future, T Function(D) callback) async* {
     final data = await future;
     final eventChannel = EventChannel('$_pluginNamespace/update/$data');
-    yield* eventChannel.receiveBroadcastStream().map((event) => callback(deserialize(event) as D));
+    yield* eventChannel.receiveBroadcastStream().map((event) => callback(deserialize(event as Uint8List) as D));
   }
 
   /// Miscellaneous End

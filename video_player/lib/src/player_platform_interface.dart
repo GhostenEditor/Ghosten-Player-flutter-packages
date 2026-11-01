@@ -69,10 +69,6 @@ abstract class PlayerPlatform extends PlatformInterface {
     throw UnimplementedError('getVideoThumbnail() has not been implemented.');
   }
 
-  Future<String?> getLocalIpAddress() {
-    throw UnimplementedError('getLocalIpAddress() has not been implemented.');
-  }
-
   Future<bool?> canPip() {
     throw UnimplementedError('canPip() has not been implemented.');
   }

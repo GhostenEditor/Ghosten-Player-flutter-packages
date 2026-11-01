@@ -1,6 +1,3 @@
-import 'dart:js_interop';
-import 'dart:js_interop_unsafe';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
@@ -22,29 +19,17 @@ class FilePickerWeb extends FilePickerPlatform {
 
   @override
   Future<String?> get moviePath {
-    final path = globalContext.getProperty<JSObject>('__TAURI__'.toJS).getProperty<JSObject>('path'.toJS);
-    return path
-        .callMethod<JSPromise>('videoDir'.toJS)
-        .toDart
-        .then((data) => data.dartify() as String?);
+    return Future.value();
   }
 
   @override
   Future<String?> get musicPath {
-    final path = globalContext.getProperty<JSObject>('__TAURI__'.toJS).getProperty<JSObject>('path'.toJS);
-    return path
-        .callMethod<JSPromise>('audioDir'.toJS)
-        .toDart
-        .then((data) => data.dartify() as String?);
+    return Future.value();
   }
 
   @override
   Future<String?> get cachePath {
-    final path = globalContext.getProperty<JSObject>('__TAURI__'.toJS).getProperty<JSObject>('path'.toJS);
-    return path
-        .callMethod<JSPromise>('cacheDir'.toJS)
-        .toDart
-        .then((data) => data.dartify() as String?);
+    return Future.value();
   }
 
   @override
@@ -61,6 +46,7 @@ class FilePickerWeb extends FilePickerPlatform {
     required Future<PageData<T>> Function(int) fetchData,
     required ItemWidgetBuilder<T> itemBuilder,
     required FileViewerController<T> controller,
+    EdgeInsets contentPadding = .zero,
     WidgetBuilder? firstPageProgressIndicatorBuilder,
     WidgetBuilder? newPageProgressIndicatorBuilder,
     WidgetBuilder? noItemsFoundIndicatorBuilder,
@@ -77,6 +63,7 @@ class FilePickerWeb extends FilePickerPlatform {
               fetchData: fetchData,
               itemBuilder: itemBuilder,
               controller: controller,
+              contentPadding: contentPadding,
               firstPageProgressIndicatorBuilder: firstPageProgressIndicatorBuilder,
               newPageProgressIndicatorBuilder: newPageProgressIndicatorBuilder,
               noItemsFoundIndicatorBuilder: noItemsFoundIndicatorBuilder,
@@ -85,22 +72,7 @@ class FilePickerWeb extends FilePickerPlatform {
           ),
         );
       case FilePickerType.local:
-        final dialog = globalContext.getProperty<JSObject>('__TAURI__'.toJS).getProperty<JSObject>('dialog'.toJS);
-        final path = await dialog
-            .callMethod<JSPromise>(
-                'open'.toJS,
-                {
-                  'directory': true,
-                  'defaultPath': rootPath,
-                }.jsify())
-            .toDart
-            .then((data) => data.dartify() as T);
-
-        if (path != null) {
-          throw UnimplementedError();
-        } else {
-          return null;
-        }
+        return Future.value();
     }
   }
 }

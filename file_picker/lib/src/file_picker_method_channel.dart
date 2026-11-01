@@ -39,7 +39,7 @@ class MethodChannelFilePicker extends FilePickerPlatform {
 
   @override
   Future<void> requestStoragePermission() async {
-    final permit = await methodChannel.invokeMethod('requestStoragePermission');
+    final bool? permit = await methodChannel.invokeMethod('requestStoragePermission');
     if (permit != true) {
       throw PlatformException(code: storagePermissionExceptionCode);
     }
@@ -47,7 +47,7 @@ class MethodChannelFilePicker extends FilePickerPlatform {
 
   @override
   Future<void> requestStorageManagePermission() async {
-    final permit = await methodChannel.invokeMethod('requestStorageManagePermission');
+    final bool? permit = await methodChannel.invokeMethod('requestStorageManagePermission');
     if (permit != true) {
       throw PlatformException(code: storagePermissionExceptionCode);
     }
@@ -64,6 +64,7 @@ class MethodChannelFilePicker extends FilePickerPlatform {
     required Future<PageData<T>> Function(int) fetchData,
     required ItemWidgetBuilder<T> itemBuilder,
     required FileViewerController<T> controller,
+    EdgeInsets contentPadding = .zero,
     WidgetBuilder? firstPageProgressIndicatorBuilder,
     WidgetBuilder? newPageProgressIndicatorBuilder,
     WidgetBuilder? noItemsFoundIndicatorBuilder,
@@ -71,19 +72,19 @@ class MethodChannelFilePicker extends FilePickerPlatform {
   }) {
     return Navigator.of(context).push<T>(
       MaterialPageRoute(
-        builder:
-            (context) => FilePickerDialog(
-              defaultTitle: defaultTitle,
-              titleBuilder: titleBuilder,
-              actions: actions,
-              fetchData: fetchData,
-              itemBuilder: itemBuilder,
-              controller: controller,
-              firstPageProgressIndicatorBuilder: firstPageProgressIndicatorBuilder,
-              newPageProgressIndicatorBuilder: newPageProgressIndicatorBuilder,
-              noItemsFoundIndicatorBuilder: noItemsFoundIndicatorBuilder,
-              firstPageErrorIndicatorBuilder: firstPageErrorIndicatorBuilder,
-            ),
+        builder: (context) => FilePickerDialog(
+          defaultTitle: defaultTitle,
+          titleBuilder: titleBuilder,
+          actions: actions,
+          fetchData: fetchData,
+          itemBuilder: itemBuilder,
+          controller: controller,
+          contentPadding: contentPadding,
+          firstPageProgressIndicatorBuilder: firstPageProgressIndicatorBuilder,
+          newPageProgressIndicatorBuilder: newPageProgressIndicatorBuilder,
+          noItemsFoundIndicatorBuilder: noItemsFoundIndicatorBuilder,
+          firstPageErrorIndicatorBuilder: firstPageErrorIndicatorBuilder,
+        ),
       ),
     );
   }

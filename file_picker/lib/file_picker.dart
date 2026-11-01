@@ -1,6 +1,7 @@
 import 'src/file_picker_platform_interface.dart';
 
 export 'src/file_picker_dialog.dart';
+export 'src/file_picker_platform_interface.dart' show UsbStorage;
 export 'src/models.dart';
 
 class FilePicker {

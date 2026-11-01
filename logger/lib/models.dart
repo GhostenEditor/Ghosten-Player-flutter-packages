@@ -6,9 +6,9 @@ class Log {
   static RegExp regExp = RegExp(r'^([\d-]+?)\s+([\d:.]+?)\s+(\d+?)\s+(\d+?)\s+(\w?)\s+([\w.-_\s]+?)\:\s+(.*?)$');
 
   static Log fromString(String s) {
-    final ma = regExp.firstMatch(s);
+    final RegExpMatch? ma = regExp.firstMatch(s);
     if (ma != null) {
-      final level = switch (ma.group(5)?.toUpperCase()) {
+      final LogLevel level = switch (ma.group(5)?.toUpperCase()) {
         'V' => LogLevel.trace,
         'D' => LogLevel.debug,
         'I' => LogLevel.info,
@@ -17,7 +17,7 @@ class Log {
         'F' => LogLevel.error,
         _ => LogLevel.error,
       };
-      final date = DateTime.tryParse('2026-${ma.group(1)} ${ma.group(2)}');
+      final DateTime? date = DateTime.tryParse('2026-${ma.group(1)} ${ma.group(2)}');
       return Log(s, level, date, ma.group(7) ?? '', ma.group(6));
     } else {
       return Log(s, LogLevel.trace, null, s, null);

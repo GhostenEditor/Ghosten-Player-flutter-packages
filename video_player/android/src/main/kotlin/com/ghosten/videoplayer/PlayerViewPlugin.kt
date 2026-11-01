@@ -12,9 +12,6 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import java.net.InetAddress
-import java.net.NetworkInterface
-import java.util.*
 
 class PlayerViewPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware,
     Application.ActivityLifecycleCallbacks {
@@ -35,7 +32,6 @@ class PlayerViewPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Activit
         when (call.method) {
             "canPip" -> result.success(activity.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE))
             "requestPip" -> result.success(requestPip())
-            "getLocalIpAddress" -> result.success(getLocalIpAddress())
             else -> {
                 when (call.method) {
                     "init" -> {
@@ -164,22 +160,6 @@ class PlayerViewPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Activit
         } else {
             return false
         }
-    }
-
-    private fun getLocalIpAddress(): String? {
-        val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
-        for (intf in interfaces) {
-            val addrs = Collections.list(intf.inetAddresses)
-            for (addr in addrs) {
-                if (!addr.isLoopbackAddress && addr is InetAddress) {
-                    val sAddr = addr.hostAddress
-                    if (sAddr != null && sAddr.indexOf(':') < 0) {
-                        return sAddr
-                    }
-                }
-            }
-        }
-        return null
     }
 
     override fun onActivityCreated(p0: Activity, p1: Bundle?) {

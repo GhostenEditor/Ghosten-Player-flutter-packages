@@ -54,6 +54,7 @@ abstract class FilePickerPlatform extends PlatformInterface {
     required Future<PageData<T>> Function(int) fetchData,
     required ItemWidgetBuilder<T> itemBuilder,
     required FileViewerController<T> controller,
+    EdgeInsets contentPadding = .zero,
     WidgetBuilder? firstPageProgressIndicatorBuilder,
     WidgetBuilder? newPageProgressIndicatorBuilder,
     WidgetBuilder? noItemsFoundIndicatorBuilder,

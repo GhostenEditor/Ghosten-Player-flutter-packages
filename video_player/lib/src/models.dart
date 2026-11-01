@@ -1,30 +1,11 @@
 // ignore_for_file: avoid_dynamic_calls
 
+import 'dart:ui';
+
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 
-enum PlayerType {
-  media3,
-  mpv;
-
-  static PlayerType fromString(String? str) {
-    return PlayerType.values.firstWhere((element) => element.name == str, orElse: () => PlayerType.media3);
-  }
-}
-
-enum PlayerStatus {
-  playing,
-  buffering,
-  paused,
-  ended,
-  error,
-  idle;
-
-  static PlayerStatus fromString(String str) {
-    return PlayerStatus.values.firstWhere((element) => element.name == str);
-  }
-}
+import 'enums.dart';
 
 class MediaTrack {
   MediaTrack.fromJson(dynamic json)
@@ -101,71 +82,26 @@ class MediaInfo {
   final int? audioBitrate;
 }
 
-enum AspectRatioType {
-  auto,
-  a16_9,
-  a4_3,
-  a1_1;
-
-  double? value() {
-    return switch (this) {
-      AspectRatioType.auto => null,
-      AspectRatioType.a16_9 => 1.778,
-      AspectRatioType.a4_3 => 1.333,
-      AspectRatioType.a1_1 => 1.0,
-    };
-  }
-
-  String label() {
-    return switch (this) {
-      AspectRatioType.auto => 'Auto',
-      AspectRatioType.a16_9 => '16 / 9',
-      AspectRatioType.a4_3 => '4 / 3',
-      AspectRatioType.a1_1 => '1 / 1',
-    };
-  }
-}
-
-enum ResizeMode {
-  fit,
-  fixedWidth,
-  fixedHeight,
-  fill,
-  zoom;
-
-  String label() {
-    return switch (this) {
-      ResizeMode.fit => 'Fit',
-      ResizeMode.fixedWidth => 'Fixed Width',
-      ResizeMode.fixedHeight => 'Fixed Height',
-      ResizeMode.fill => 'Fill',
-      ResizeMode.zoom => 'Zoom',
-    };
-  }
-}
-
-class PlaylistItemDisplay<T> extends Equatable {
-  const PlaylistItemDisplay({
-    required this.source,
-    this.fileId,
+class PlaylistItem extends Equatable {
+  const PlaylistItem({
+    this.source,
     this.title,
     this.description,
     this.poster,
     this.url,
     this.start = Duration.zero,
     this.end = Duration.zero,
-  });
+  }) : assert(source != null || url != null);
 
   final String? title;
   final String? description;
   final String? poster;
-  final String? fileId;
-  final Uri? url;
-  final T source;
   final Duration start;
   final Duration end;
+  final Uri? url;
+  final dynamic source;
 
-  PlaylistItemDisplay<T> copyWith({
+  PlaylistItem copyWith({
     String? poster,
     String? title,
     String? description,
@@ -173,10 +109,9 @@ class PlaylistItemDisplay<T> extends Equatable {
     Uri? url,
     Duration? start,
     Duration? end,
-    T? source,
+    dynamic source,
   }) {
-    return PlaylistItemDisplay(
-      fileId: fileId,
+    return PlaylistItem(
       poster: poster ?? this.poster,
       title: title ?? this.title,
       description: description ?? this.description,
@@ -187,91 +122,22 @@ class PlaylistItemDisplay<T> extends Equatable {
     );
   }
 
-  PlaylistItem toItem({Uri? url, List<Subtitle> subtitles = const []}) {
-    return PlaylistItem(
-      poster: poster,
-      title: title,
-      description: description,
-      url: url ?? this.url!,
-      start: start,
-      end: end,
-      subtitles: subtitles,
-    );
-  }
-
   @override
   List<Object?> get props => [title, description, poster];
 }
 
-class PlaylistItem extends Equatable {
-  const PlaylistItem({
-    required this.url,
-    this.mimeType,
-    this.title,
-    this.description,
-    this.poster,
-    this.subtitles,
-    this.start = Duration.zero,
-    this.end = Duration.zero,
-    this.others,
-  });
+class PlayerFileInfo {
+  const PlayerFileInfo({required this.url, this.subtitles, this.others});
 
-  final String? poster;
-  final String? title;
-  final String? description;
-  final String? mimeType;
   final Uri url;
-  final Duration start;
-  final Duration end;
   final List<Subtitle>? subtitles;
   final dynamic others;
-
-  PlaylistItem copyWith({
-    String? poster,
-    String? title,
-    String? description,
-    String? mimeType,
-    Uri? url,
-    Duration? start,
-    Duration? end,
-    Duration? duration,
-    List<Subtitle>? subtitles,
-    dynamic others,
-  }) {
-    return PlaylistItem(
-      poster: poster ?? this.poster,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      url: url ?? this.url,
-      mimeType: mimeType ?? this.mimeType,
-      start: start ?? this.start,
-      end: end ?? this.end,
-      subtitles: subtitles ?? this.subtitles,
-      others: others ?? this.others,
-    );
-  }
-
-  Map<String, dynamic> toSource() {
-    return {
-      'url': url.toString(),
-      'mimeType': parseMimeType(url),
-      'title': title,
-      'description': description,
-      'poster': poster,
-      'start': start.inMilliseconds,
-      'end': end.inMilliseconds,
-      'subtitle': subtitles?.map((e) => e.toJson()).toList(),
-    };
-  }
-
-  @override
-  List<Object?> get props => [url, title, poster];
 }
 
 String? parseMimeType(Uri uri) {
   if (uri.scheme == 'http' || uri.scheme == 'https') {
-    final path = uri.path;
-    final ext = path.split('.').last;
+    final String path = uri.path;
+    final String ext = path.split('.').last;
     switch (ext.toLowerCase()) {
       case 'm3u8':
         return 'application/x-mpegURL';
@@ -289,20 +155,6 @@ String? parseMimeType(Uri uri) {
     }
   } else {
     return null;
-  }
-}
-
-enum SubtitleMimeType {
-  xml,
-  vtt,
-  ass,
-  srt;
-
-  static SubtitleMimeType? fromString(String? str) {
-    if (str?.toLowerCase() == 'subrip') {
-      return SubtitleMimeType.srt;
-    }
-    return SubtitleMimeType.values.firstWhereOrNull((element) => element.name == str);
   }
 }
 

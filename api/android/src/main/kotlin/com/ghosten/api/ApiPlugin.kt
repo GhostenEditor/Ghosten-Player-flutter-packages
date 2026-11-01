@@ -16,7 +16,6 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import kotlinx.coroutines.*
-import java.io.IOException
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.util.*
@@ -54,11 +53,10 @@ class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnec
                     return result.error("50000", "Service Start Failed", null)
                 }
                 coroutineScope.launch(Dispatchers.Main) {
-                    if (call.method.endsWith("/cb")) {
+                    if (call.method == "/dlna/discover" || call.method == "/network/diagnostics" || call.method == "/storage/insert" || call.method == "/schedule/task/event") {
                         val id = UUID.randomUUID().toString()
                         result.success(byteArrayOf(217.toByte(), 36).plus(id.toByteArray()))
-                        val eventChannel =
-                            EventChannel(binaryMessenger, "$PLUGIN_NAMESPACE/update/$id")
+                        val eventChannel = EventChannel(binaryMessenger, "$PLUGIN_NAMESPACE/update/$id")
                         var finished = false
                         var apiException: ApiException? = null
                         eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
@@ -67,9 +65,7 @@ class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnec
                                     if (finished) {
                                         if (apiException != null) {
                                             result.error(
-                                                apiException!!.code.toString(),
-                                                apiException!!.message,
-                                                null
+                                                apiException!!.code.toString(), apiException!!.message, null
                                             )
                                         }
                                         eventSink.endOfStream()
@@ -93,12 +89,7 @@ class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnec
                                     object : ApiMethodHandler {
                                         override fun onApiMethodUpdate(data: ByteArray) {
                                             activity.runOnUiThread {
-                                                eventSinkMap[id]?.success(
-                                                    data.copyOfRange(
-                                                        2,
-                                                        data.size
-                                                    )
-                                                )
+                                                eventSinkMap[id]?.success(data)
                                             }
                                         }
                                     })
@@ -106,9 +97,7 @@ class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnec
                         } catch (ex: ApiException) {
                             if (eventSinkMap[id] != null) {
                                 eventSinkMap[id]?.error(
-                                    ex.code.toString(),
-                                    ex.message,
-                                    null
+                                    ex.code.toString(), ex.message, null
                                 )
                             } else {
                                 apiException = ex

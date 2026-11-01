@@ -25,9 +25,11 @@ class FilePickerDialog<T> extends StatefulWidget {
     this.newPageProgressIndicatorBuilder,
     this.noItemsFoundIndicatorBuilder,
     this.firstPageErrorIndicatorBuilder,
+    this.contentPadding = .zero,
   });
 
   final Widget? defaultTitle;
+  final EdgeInsets contentPadding;
   final Widget Function(T?) titleBuilder;
   final List<Widget> actions;
   final Future<PageData<T>> Function(int) fetchData;
@@ -166,6 +168,7 @@ class _FilePickerDialogState<T> extends State<FilePickerDialog<T>> {
                 child: _FileViewer(
                   key: UniqueKey(),
                   controller: _controller,
+                  contentPadding: widget.contentPadding,
                   itemBuilder: widget.itemBuilder,
                   fetchData: widget.fetchData,
                   firstPageProgressIndicatorBuilder: widget.firstPageProgressIndicatorBuilder,
@@ -230,6 +233,7 @@ class _FileViewer<T> extends StatefulWidget {
     this.newPageProgressIndicatorBuilder,
     this.noItemsFoundIndicatorBuilder,
     this.firstPageErrorIndicatorBuilder,
+    this.contentPadding = .zero,
   });
 
   final Future<PageData<T>> Function(int) fetchData;
@@ -239,6 +243,7 @@ class _FileViewer<T> extends StatefulWidget {
   final WidgetBuilder? newPageProgressIndicatorBuilder;
   final WidgetBuilder? noItemsFoundIndicatorBuilder;
   final WidgetBuilder? firstPageErrorIndicatorBuilder;
+  final EdgeInsets contentPadding;
 
   @override
   State<_FileViewer<T>> createState() => _FileViewerState();
@@ -261,6 +266,7 @@ class _FileViewerState<T> extends State<_FileViewer<T>> {
       child: PagedListView(
         scrollController: _scrollController,
         state: _state,
+        padding: widget.contentPadding,
         fetchNextPage: _fetchNextPage,
         builderDelegate: PagedChildBuilderDelegate(
           itemBuilder: widget.itemBuilder,
@@ -274,19 +280,23 @@ class _FileViewerState<T> extends State<_FileViewer<T>> {
   }
 
   Future<void> _fetchNextPage() async {
-    if (_state.isLoading) return;
+    if (_state.isLoading) {
+      return;
+    }
     await Future.value();
     setState(() {
       _state = _state.copyWith(isLoading: true, error: null);
     });
     widget.controller.error = null;
     try {
-      final newKey = (_state.keys?.last ?? -1) + 1;
+      final int newKey = (_state.keys?.last ?? -1) + 1;
 
-      final data = await widget.fetchData(newKey);
+      final PageData<T> data = await widget.fetchData(newKey);
 
-      final hasNextPage = (data.count / data.limit).ceil() > (newKey + 1);
-      if (!mounted) return;
+      final bool hasNextPage = (data.count / data.limit).ceil() > (newKey + 1);
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _state = _state.copyWith(
           pages: [...?_state.pages, data.items],

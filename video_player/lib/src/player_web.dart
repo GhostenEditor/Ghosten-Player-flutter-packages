@@ -10,10 +10,10 @@ import 'player_platform_interface.dart';
 
 class PlayerWeb extends PlayerPlatform {
   PlayerWeb() {
-    bool coreIdle = false;
-    bool pause = false;
-    bool pausedForCache = false;
-    bool seeking = false;
+    var coreIdle = false;
+    var pause = false;
+    var pausedForCache = false;
+    var seeking = false;
     listen('isInitialized', (data) {
       handler?.call(const MethodCall('isInitialized'));
     });
@@ -27,7 +27,7 @@ class PlayerWeb extends PlayerPlatform {
       handler?.call(MethodCall('bufferingUpdate', (data as int) * 1000));
     });
     listen('tracksChanged', (data) {
-      final mediaInfo = {};
+      final Map<String, String> mediaInfo = {};
       for (final track in data) {
         if (track['selected']) {
           switch (track['type']) {
@@ -88,8 +88,8 @@ class PlayerWeb extends PlayerPlatform {
   }
 
   Future<T>? invoke<T>(String method, [dynamic arg]) {
-    final ar = arg is Map ? arg.jsify() : arg;
-    final core = globalContext.getProperty<JSObject?>('__TAURI__'.toJS)?.getProperty<JSObject?>('core'.toJS);
+    final dynamic ar = arg is Map ? arg.jsify() : arg;
+    final JSObject? core = globalContext.getProperty<JSObject?>('__TAURI__'.toJS)?.getProperty<JSObject?>('core'.toJS);
     if (ar == null) {
       return core?.callMethod<JSPromise>('invoke'.toJS, method.jsify()).toDart.then((data) => data.dartify() as T);
     } else {
@@ -105,7 +105,7 @@ class PlayerWeb extends PlayerPlatform {
           'listen'.toJS,
           event.toJS,
           (JSObject data) {
-            final payload = data.getProperty('payload'.toJS);
+            final JSAny? payload = data.getProperty('payload'.toJS);
             callback(payload.dartify());
           }.toJS,
         );
@@ -124,32 +124,32 @@ class PlayerWeb extends PlayerPlatform {
 
   @override
   Future<void> play() async {
-    invoke('play');
+    await invoke('play');
   }
 
   @override
   Future<void> pause() async {
-    invoke('pause');
+    await invoke('pause');
   }
 
   @override
   Future<void> next(int index) async {
-    invoke('next', {'index': index});
+    await invoke('next', {'index': index});
   }
 
   @override
   Future<void> seekTo(Duration position) async {
-    invoke('seek_to', {'position': position.inSeconds});
+    await invoke('seek_to', {'position': position.inSeconds});
   }
 
   @override
   Future<void> setPlaybackSpeed(double speed) async {
-    invoke('speed', {'speed': speed});
+    await invoke('speed', {'speed': speed});
   }
 
   @override
   Future<void> setTrack(String type, String? id) async {
-    invoke('track', {'id': id, 'type': type});
+    await invoke('track', {'id': id, 'type': type});
   }
 
   @override
@@ -172,12 +172,12 @@ class PlayerWeb extends PlayerPlatform {
 
   @override
   Future<void> enterFullscreen() async {
-    invoke('player_fullscreen', {'fullscreen': true});
+    await invoke('player_fullscreen', {'fullscreen': true});
   }
 
   @override
   Future<void> exitFullscreen() async {
-    invoke('player_fullscreen', {'fullscreen': false});
+    await invoke('player_fullscreen', {'fullscreen': false});
   }
 
   @override
@@ -187,12 +187,12 @@ class PlayerWeb extends PlayerPlatform {
 
   @override
   Future<void> init(Map<String, dynamic> args) async {
-    invoke('init', args);
+    await invoke('init', args);
   }
 
   @override
   Future<void> dispose() async {
-    invoke('dispose');
+    await invoke('dispose');
   }
 
   @override
@@ -203,11 +203,6 @@ class PlayerWeb extends PlayerPlatform {
 
   @override
   Future<void> updateSource(Map<String, dynamic> source, int index) async {}
-
-  @override
-  Future<String> getLocalIpAddress() async {
-    return '';
-  }
 
   @override
   Future<void> setPlayerOption(String optionName, dynamic optionValue) async {}
