@@ -95,7 +95,7 @@ task downloadDependencies {
         def calculatedSha256 = MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
 
         if (calculatedSha256 != dependencySha256) {
-//            destFile.delete()
+            destFile.delete()
         }
 
     }
