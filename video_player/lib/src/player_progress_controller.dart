@@ -10,17 +10,19 @@ import 'player_controller.dart';
 
 class PlayerProgressController extends ChangeNotifier {
   PlayerProgressController(this.controller, {this.showThumbnails = false}) {
-    controller.status.addListener(setStatus);
+    controller.playbackState.addListener(setStatus);
     controller.position.addListener(setPosition);
     controller.duration.addListener(setDuration);
     controller.bufferedPosition.addListener(setBuffered);
+    controller.fatalError.addListener(setFatalError);
   }
 
   Duration duration = Duration.zero;
   Duration buffered = Duration.zero;
   Duration position = Duration.zero;
   Duration cachedPosition = Duration.zero;
-  PlayerStatus status = PlayerStatus.buffering;
+  PlaybackState status = PlaybackState.buffering;
+  String? fatalError;
   bool seeking = false;
   final bool showThumbnails;
   final PlayerBaseController controller;
@@ -32,7 +34,7 @@ class PlayerProgressController extends ChangeNotifier {
       entry.dispose();
     }
     scrollController.dispose();
-    controller.status.removeListener(setStatus);
+    controller.playbackState.removeListener(setStatus);
     controller.position.removeListener(setPosition);
     controller.duration.removeListener(setDuration);
     controller.bufferedPosition.removeListener(setBuffered);
@@ -51,8 +53,8 @@ class PlayerProgressController extends ChangeNotifier {
   );
 
   void setStatus() {
-    if (status != controller.status.value) {
-      status = controller.status.value;
+    if (status != controller.playbackState.value) {
+      status = controller.playbackState.value;
       notifyListeners();
     }
   }
@@ -78,8 +80,15 @@ class PlayerProgressController extends ChangeNotifier {
     }
   }
 
+  void setFatalError() {
+    if (fatalError != controller.fatalError.value) {
+      fatalError = controller.fatalError.value;
+      notifyListeners();
+    }
+  }
+
   void startSeek(BuildContext context) {
-    if (status == PlayerStatus.error || status == PlayerStatus.idle) {
+    if (status == .idle) {
       return;
     }
     if (duration == Duration.zero) {
@@ -164,7 +173,7 @@ class _ThumbnailsListState extends State<_ThumbnailsList> with TickerProviderSta
             ListView.separated(
               scrollCacheExtent: const ScrollCacheExtent.pixels(0),
               controller: _scrollController,
-              padding: EdgeInsets.symmetric(horizontal: (MediaQuery.of(context).size.width - 150) / 2),
+              padding: EdgeInsets.symmetric(horizontal: (MediaQuery.sizeOf(context).width - 150) / 2),
               scrollDirection: Axis.horizontal,
               itemBuilder: (context, index) => AspectRatio(
                 aspectRatio: 1.5,
@@ -341,13 +350,13 @@ class _PlayerProgressViewState extends State<PlayerProgressView> {
                 clipBehavior: Clip.antiAlias,
                 child: Stack(
                   children: [
-                    Container(color: Theme.of(context).colorScheme.surface),
+                    Container(color: Theme.of(context).colorScheme.surfaceContainer),
                     AnimatedFractionallySizedBox(
                       duration: const Duration(milliseconds: 200),
                       widthFactor: max(_controller.buffered / _controller.duration ?? 0, 0),
                       child: Container(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                     ),
-                    if (_controller.status == PlayerStatus.error)
+                    if (_controller.fatalError != null)
                       Container(color: Theme.of(context).colorScheme.errorContainer)
                     else
                       AnimatedFractionallySizedBox(
@@ -425,30 +434,32 @@ class _PlayerProgressLabelState extends State<PlayerProgressLabel> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTextStyle(
-      style: Theme.of(context).textTheme.labelMedium!,
-      child: Row(
+    final bool showHour = widget.controller.duration.inHours > 1;
+    return Text.rich(
+      overflow: .ellipsis,
+      TextSpan(
+        style: Theme.of(context).textTheme.labelMedium!.copyWith(fontFamily: 'monospace'),
         children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 36),
-            child: Text(
-              widget.controller.seeking
-                  ? widget.controller.cachedPosition.toDisplay()
-                  : widget.controller.position.toDisplay(),
-            ),
+          TextSpan(
+            text: widget.controller.seeking
+                ? widget.controller.cachedPosition.toDisplay(showHour: showHour)
+                : widget.controller.position.toDisplay(showHour: showHour),
           ),
-          const Text('-', style: TextStyle(color: Colors.transparent)),
-          const Text('/'),
-          Text('-', style: widget.controller.seeking ? null : const TextStyle(color: Colors.transparent)),
-          ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 36),
-            child: Text(
-              (widget.controller.seeking
-                      ? widget.controller.duration - widget.controller.cachedPosition
-                      : widget.controller.duration)
-                  .toDisplay(),
-              textAlign: TextAlign.end,
-            ),
+          const TextSpan(
+            text: '-',
+            style: TextStyle(color: Colors.transparent),
+          ),
+          const TextSpan(text: '/'),
+          TextSpan(
+            text: '-',
+            style: widget.controller.seeking ? null : const TextStyle(color: Colors.transparent),
+          ),
+          TextSpan(
+            text:
+                (widget.controller.seeking
+                        ? widget.controller.duration - widget.controller.cachedPosition
+                        : widget.controller.duration)
+                    .toDisplay(showHour: showHour),
           ),
         ],
       ),
@@ -461,8 +472,8 @@ class _PlayerProgressLabelState extends State<PlayerProgressLabel> {
 }
 
 extension on Duration {
-  String toDisplay() {
-    if (inHours > 0) {
+  String toDisplay({bool showHour = false}) {
+    if (showHour) {
       return '$inHours:${inMinutes.remainder(60).toString().padLeft(2, '0')}:${inSeconds.remainder(60).toString().padLeft(2, '0')}';
     } else {
       return '${inMinutes.remainder(60).toString().padLeft(2, '0')}:${inSeconds.remainder(60).toString().padLeft(2, '0')}';

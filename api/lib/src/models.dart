@@ -482,7 +482,8 @@ class Library {
       poster = json[4],
       driverId = json[5],
       filename = json[7],
-      type = LibraryType.values.elementAt(json[8]);
+      type = LibraryType.values.elementAt(json[8]),
+      disabled = json[9];
   final dynamic id;
   final int driverId;
   final String filename;
@@ -491,6 +492,7 @@ class Library {
   final LibraryType type;
   final String? driverAvatar;
   final String? poster;
+  final bool disabled;
 }
 
 class DNSOverride {
@@ -568,6 +570,13 @@ class SearchResult {
 }
 
 class SearchFuzzyResult {
+  const SearchFuzzyResult()
+    : movies = const PageData(),
+      series = const PageData(),
+      episodes = const PageData(),
+      mediaCast = const PageData(),
+      mediaCrew = const PageData();
+
   SearchFuzzyResult.fromJson(dynamic json)
     : movies = PageData.fromJson(json[0], Movie.fromJson),
       series = PageData.fromJson(json[1], TVSeries.fromJson),
@@ -594,14 +603,14 @@ class SessionCreate {
   final Uri uri;
 }
 
-class DriverAccount {
-  DriverAccount.fromJson(dynamic json)
+class Storage {
+  Storage.fromJson(dynamic json)
     : id = json[0],
       type = DriverType.values.elementAt(json[1]),
       name = json[2],
       avatar = json[3];
 
-  DriverAccount.local() : id = 0, type = DriverType.local, name = 'Local';
+  Storage.local() : id = 0, type = DriverType.local, name = 'Local';
 
   int id;
   DriverType type;

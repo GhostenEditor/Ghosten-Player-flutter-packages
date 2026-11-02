@@ -1,6 +1,5 @@
 import 'src/api_platform_interface.dart';
 
-export 'src/api_platform_interface.dart' show navigatorKey, routeObserver;
 export 'src/enums.dart';
 export 'src/errors.dart';
 export 'src/models.dart';
@@ -13,6 +12,7 @@ class Api {
   static final initialized = ApiPlatform.instance.initialized;
   static final rollbackData = ApiPlatform.instance.rollbackData;
   static final resetData = ApiPlatform.instance.resetData;
+  static final localIpAddress = ApiPlatform.instance.localIpAddress;
   static final fileInfo = ApiPlatform.instance.fileInfo;
   static final fileList = ApiPlatform.instance.fileList;
   static final fileRename = ApiPlatform.instance.fileRename;
@@ -89,6 +89,8 @@ class Api {
   static final libraryInsert = ApiPlatform.instance.libraryInsert;
   static final libraryRefreshById = ApiPlatform.instance.libraryRefreshById;
   static final libraryDeleteById = ApiPlatform.instance.libraryDeleteById;
+  static final libraryEnableById = ApiPlatform.instance.libraryEnableById;
+  static final libraryDisableById = ApiPlatform.instance.libraryDisableById;
   static final genreQueryAll = ApiPlatform.instance.genreQueryAll;
   static final studioQueryAll = ApiPlatform.instance.studioQueryAll;
   static final keywordQueryAll = ApiPlatform.instance.keywordQueryAll;

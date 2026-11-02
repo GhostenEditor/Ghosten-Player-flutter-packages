@@ -40,8 +40,16 @@ abstract class FilePickerPlatform extends PlatformInterface {
     throw UnimplementedError('requestStoragePermission() has not been implemented.');
   }
 
-  Future<void> requestStorageManagePermission() async {
+  Future<bool> requestStorageManagePermission() {
     throw UnimplementedError('requestStoragePermission() has not been implemented.');
+  }
+
+  Future<void> install(String filePath) {
+    throw UnimplementedError('install() has not been implemented.');
+  }
+
+  Future<bool> requestInstallPermission(){
+    throw UnimplementedError('requestInstallPermission() has not been implemented.');
   }
 
   Future<T?> showFilePicker<T>(

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:msgpack_dart/msgpack_dart.dart';
 
@@ -26,6 +25,11 @@ class MethodChannelApi extends ApiPlatform {
       return true;
     }
     return false;
+  }
+
+  @override
+  Future<String?> localIpAddress() {
+    return _methodChannel.invokeMethod('localIpAddress');
   }
 
   /// Session Start
@@ -81,15 +85,7 @@ class Client extends ApiClient {
 
   Future<T?> _send<T>(String method, String path, [Map<String, dynamic>? data]) {
     return _methodChannel
-        .invokeMethod<Uint8List>(path, {
-          'data': serialize(data?.values),
-          'params': serialize([
-            if (navigatorKey.currentState?.context != null)
-              Localizations.localeOf(navigatorKey.currentState!.context).languageCode
-            else
-              null,
-          ]),
-        })
+        .invokeMethod<Uint8List>(path, {'data': serialize(data?.values)})
         .timeout(const Duration(seconds: 30))
         .then((value) {
           if (value?.isNotEmpty ?? false) {

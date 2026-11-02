@@ -10,48 +10,70 @@ import 'enums.dart';
 class MediaTrack {
   MediaTrack.fromJson(dynamic json)
     : id = json['id'],
-      selected = json['selected'],
-      supported = json['supported'],
-      label = json['label'],
-      mimeType = json['mimeType'],
-      rate = json['rate'],
-      averageBitrate = json['averageBitrate'],
+      type = TrackType.fromInt(json['type']),
       name = json['name'],
-      type = json['type'];
+      label = json['label'],
+      selected = json['selected'],
+      averageBitrate = json['averageBitrate'],
+      bitrate = json['bitrate'],
+      codecs = json['codecs'],
+      containerMimeType = json['containerMimeType'],
+      sampleMimeType = json['sampleMimeType'],
+      width = json['width'],
+      height = json['height'],
+      pixelFormat = json['pixelFormat'],
+      decodedWidth = json['decodedWidth'],
+      decodedHeight = json['decodedHeight'],
+      frameRate = json['frameRate'],
+      rotationDegrees = json['rotationDegrees'],
+      mirrorHorizontal = json['mirrorHorizontal'],
+      pixelWidthHeightRatio = json['pixelWidthHeightRatio'],
+      sampleRate = json['sampleRate'];
   String? id;
-  bool selected;
-  bool supported;
-  String? label;
-  String? mimeType;
-  int? rate;
-  int? averageBitrate;
+  TrackType type;
   String? name;
-  String type;
+  String? label;
+  bool selected;
+  int? averageBitrate;
+  int? bitrate;
+  String? codecs;
+  String? containerMimeType;
+  String? sampleMimeType;
+  int? width;
+  int? height;
+  int? pixelFormat;
+  int? decodedWidth;
+  int? decodedHeight;
+  double? frameRate;
+  int? rotationDegrees;
+  bool? mirrorHorizontal;
+  double? pixelWidthHeightRatio;
+  int? sampleRate;
 }
 
 class MediaTrackGroup {
   MediaTrackGroup({required this.video, required this.sub, required this.audio}) {
-    selectedVideo = video.firstWhereOrNull((e) => e.selected)?.id;
-    selectedAudio = audio.firstWhereOrNull((e) => e.selected)?.id;
-    selectedSub = sub.firstWhereOrNull((e) => e.selected)?.id;
+    selectedVideo = video.firstWhereOrNull((e) => e.selected);
+    selectedAudio = audio.firstWhereOrNull((e) => e.selected);
+    selectedSub = sub.firstWhereOrNull((e) => e.selected);
   }
 
   MediaTrackGroup.empty() : video = [], sub = [], audio = [];
 
   MediaTrackGroup.fromTracks(List<MediaTrack> tracks)
-    : audio = tracks.where((track) => track.type == 'audio').toList(),
-      video = tracks.where((track) => track.type == 'video').toList(),
-      sub = tracks.where((track) => track.type == 'sub').toList(),
-      selectedVideo = tracks.firstWhereOrNull((track) => track.type == 'video' && track.selected)?.id,
-      selectedAudio = tracks.firstWhereOrNull((track) => track.type == 'audio' && track.selected)?.id,
-      selectedSub = tracks.firstWhereOrNull((track) => track.type == 'sub' && track.selected)?.id;
+    : audio = tracks.where((track) => track.type == .audio).toList(),
+      video = tracks.where((track) => track.type == .video).toList(),
+      sub = tracks.where((track) => track.type == .text).toList(),
+      selectedVideo = tracks.firstWhereOrNull((track) => track.type == .video && track.selected),
+      selectedAudio = tracks.firstWhereOrNull((track) => track.type == .audio && track.selected),
+      selectedSub = tracks.firstWhereOrNull((track) => track.type == .text && track.selected);
   final List<MediaTrack> video;
   final List<MediaTrack> audio;
   final List<MediaTrack> sub;
 
-  dynamic selectedVideo;
-  dynamic selectedAudio;
-  dynamic selectedSub;
+  MediaTrack? selectedVideo;
+  MediaTrack? selectedAudio;
+  MediaTrack? selectedSub;
 }
 
 class MediaChange {
@@ -62,25 +84,25 @@ class MediaChange {
   final Duration position;
 }
 
-class MediaInfo {
-  MediaInfo.fromJson(dynamic json)
-    : videoCodecs = json['videoCodecs'],
-      videoMime = json['videoMime'],
-      videoFPS = json['videoFPS'],
-      videoSize = json['videoSize'],
-      videoBitrate = json['videoBitrate'],
-      audioCodecs = json['audioCodecs'],
-      audioMime = json['audioMime'],
-      audioBitrate = json['audioBitrate'];
-  final String? videoCodecs;
-  final String? videoMime;
-  final double? videoFPS;
-  final int? videoBitrate;
-  final String? videoSize;
-  final String? audioCodecs;
-  final String? audioMime;
-  final int? audioBitrate;
-}
+// class MediaInfo {
+//   MediaInfo.fromJson(dynamic json)
+//     : videoCodecs = json['videoCodecs'],
+//       videoMime = json['videoMime'],
+//       videoFPS = json['videoFPS'],
+//       videoSize = json['videoSize'],
+//       videoBitrate = json['videoBitrate'],
+//       audioCodecs = json['audioCodecs'],
+//       audioMime = json['audioMime'],
+//       audioBitrate = json['audioBitrate'];
+//   final String? videoCodecs;
+//   final String? videoMime;
+//   final double? videoFPS;
+//   final int? videoBitrate;
+//   final String? videoSize;
+//   final String? audioCodecs;
+//   final String? audioMime;
+//   final int? audioBitrate;
+// }
 
 class PlaylistItem extends Equatable {
   const PlaylistItem({

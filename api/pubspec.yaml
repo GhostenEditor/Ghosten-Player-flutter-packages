@@ -15,7 +15,7 @@ dependencies:
   plugin_platform_interface: ^2.0.2
   collection: ^1.19.0
   dio: ^5.7.0
-  equatable: ^2.0.0
+  equatable: ^3.0.0
   msgpack_dart: ^1.0.0
   rxdart: ^0.28.0
 

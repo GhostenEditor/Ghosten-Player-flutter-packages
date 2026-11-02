@@ -4,6 +4,7 @@ import 'player_platform_interface.dart';
 
 class MethodChannelPlayer extends PlayerPlatform {
   final MethodChannel _channel = const MethodChannel('com.ghosten.player/player');
+  final MethodChannel _viewChannel = const MethodChannel('com.ghosten.player/player_view');
 
   @override
   Future<void> play() {
@@ -33,11 +34,6 @@ class MethodChannelPlayer extends PlayerPlatform {
   @override
   Future<void> setTrack(String type, String? id) {
     return _channel.invokeMethod('setTrack', {'type': type, 'id': id});
-  }
-
-  @override
-  Future<bool?> requestPip() {
-    return _channel.invokeMethod<bool>('requestPip', {});
   }
 
   @override
@@ -71,21 +67,6 @@ class MethodChannelPlayer extends PlayerPlatform {
   }
 
   @override
-  Future<bool?> canPip() {
-    return _channel.invokeMethod('canPip');
-  }
-
-  @override
-  Future<void> enterFullscreen() {
-    return _channel.invokeMethod('fullscreen', true);
-  }
-
-  @override
-  Future<void> exitFullscreen() {
-    return _channel.invokeMethod('fullscreen', false);
-  }
-
-  @override
   Future<void> setPlayerOption(String optionName, dynamic optionValue) {
     return _channel.invokeMethod('setPlayerOption', {'name': optionName, 'value': optionValue});
   }
@@ -101,12 +82,12 @@ class MethodChannelPlayer extends PlayerPlatform {
   }
 
   @override
-  Future<void> init(Map<String, dynamic> args) {
-    return _channel.invokeMethod('init', args);
+  Future<void> create(Map<String, dynamic> args) {
+    return _viewChannel.invokeMethod('create', args);
   }
 
   @override
   Future<void> dispose() {
-    return _channel.invokeMethod('dispose');
+    return _viewChannel.invokeMethod('dispose');
   }
 }

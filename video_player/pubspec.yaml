@@ -11,13 +11,10 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
-  animations: ^2.0.0
-  cached_network_image: ^3.4.0
   collection: ^1.19.0
-  equatable: ^2.1.0
+  equatable: ^3.0.0
+  flutter_cache_manager: ^3.4.5
   plugin_platform_interface: ^2.0.2
-  rxdart: ^0.28.0
-  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

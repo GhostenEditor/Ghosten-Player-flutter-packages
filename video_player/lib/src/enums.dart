@@ -9,16 +9,30 @@ enum PlayerType {
   }
 }
 
-enum PlayerStatus {
-  playing,
+enum PlaybackState {
+  idle,
   buffering,
-  paused,
-  ended,
-  error,
-  idle;
+  ready,
+  ended;
 
-  static PlayerStatus fromString(String str) {
-    return PlayerStatus.values.firstWhere((element) => element.name == str);
+  static PlaybackState fromInt(int index) {
+    return PlaybackState.values[index - 1];
+  }
+}
+
+enum TrackType {
+  none,
+  unknown,
+  default_,
+  audio,
+  video,
+  text,
+  image,
+  metadata,
+  cameraMotion;
+
+  static TrackType fromInt(int index) {
+    return TrackType.values[index + 2];
   }
 }
 

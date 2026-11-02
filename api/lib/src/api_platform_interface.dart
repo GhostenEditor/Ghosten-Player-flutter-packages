@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:msgpack_dart/msgpack_dart.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -9,9 +8,6 @@ import 'package:rxdart/rxdart.dart';
 import 'api_method_channel.dart';
 import 'enums.dart';
 import 'models.dart';
-
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey();
-final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 abstract class ApiPlatform extends PlatformInterface {
   ApiPlatform() : super(token: _token);
@@ -47,6 +43,10 @@ abstract class ApiPlatform extends PlatformInterface {
 
   Future<void> resetData() {
     return client.post('/data/reset');
+  }
+
+  Future<String?> localIpAddress() {
+    return Future.value();
   }
 
   Stream<T> streamWithCallback<T, D>(Future<dynamic> future, T Function(D) callback);
@@ -99,17 +99,19 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<void> subtitleInsert(String id, SubtitleData subtitle) {
-    return client.put(
-      '/subtitle/update/id',
-      data: {
-        'id': id,
-        'label': subtitle.label,
-        'url': subtitle.url?.toString(),
-        'mimeType': subtitle.mimeType,
-        'language': subtitle.language,
-        'selected': subtitle.selected,
-      },
-    );
+    return client
+        .put(
+          '/subtitle/update/id',
+          data: {
+            'id': id,
+            'label': subtitle.label,
+            'url': subtitle.url?.toString(),
+            'mimeType': subtitle.mimeType,
+            'language': subtitle.language,
+            'selected': subtitle.selected,
+          },
+        )
+        .onSuccess((_) => EventDispatcher.add(.subtitle, .add, id));
   }
 
   Future<void> subtitleDeleteById(dynamic id) {
@@ -177,6 +179,15 @@ abstract class ApiPlatform extends PlatformInterface {
   Stream<ScheduleTaskEventData> scheduleTaskEvent() {
     return streamWithCallback<ScheduleTaskEventData, dynamic>(client.post('/schedule/task/event'), (data) {
       return ScheduleTaskEventData.fromJson(data);
+    }).doOnData((data) {
+      switch (data.type) {
+        case ScheduleTaskEventType.syncLibrary:
+        case ScheduleTaskEventType.scrapeLibrary:
+        case ScheduleTaskEventType.palette:
+          if (data.subType == .done) {
+            EventDispatcher.add(.library, .update);
+          }
+      }
     });
   }
 
@@ -207,15 +218,21 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<void> dnsOverrideInsert({required String domain, required String ip}) {
-    return client.put('/dns/override/insert', data: {'domain': domain, 'ip': ip});
+    return client
+        .put('/dns/override/insert', data: {'domain': domain, 'ip': ip})
+        .onSuccess((_) => EventDispatcher.add(.dns, .add));
   }
 
   Future<void> dnsOverrideUpdateById({required int id, required String domain, required String ip}) {
-    return client.post('/dns/override/update/id', data: {'id': id, 'domain': domain, 'ip': ip});
+    return client
+        .post('/dns/override/update/id', data: {'id': id, 'domain': domain, 'ip': ip})
+        .onSuccess((_) => EventDispatcher.add(.dns, .update));
   }
 
   Future<void> dnsOverrideDeleteById(int id) {
-    return client.delete('/dns/override/delete/id', data: {'id': id});
+    return client
+        .delete('/dns/override/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.dns, .delete));
   }
 
   /// DNS End
@@ -248,11 +265,15 @@ abstract class ApiPlatform extends PlatformInterface {
   }
 
   Future<void> serverActiveById(int id) {
-    return client.post('/server/active/id', data: {'id': id}).onSuccess((_) => EventDispatcher.add(.server, .update));
+    return client
+        .post('/server/active/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.server, .update, id));
   }
 
   Future<void> serverDeleteById(int id) {
-    return client.delete('/server/delete/id', data: {'id': id}).onSuccess((_) => EventDispatcher.add(.server, .delete));
+    return client
+        .delete('/server/delete/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.server, .delete, id));
   }
 
   /// Server End
@@ -313,9 +334,9 @@ abstract class ApiPlatform extends PlatformInterface {
   /// Playlist End
 
   /// Driver Start
-  Future<List<DriverAccount>> storageQueryAll() async {
+  Future<List<Storage>> storageQueryAll() async {
     final data = await client.get('/storage/query/all');
-    return listFromJson(data, DriverAccount.fromJson);
+    return listFromJson(data, Storage.fromJson);
   }
 
   Stream<dynamic> storageInsert(DriverType type, dynamic data) {
@@ -504,7 +525,7 @@ abstract class ApiPlatform extends PlatformInterface {
   /// TV Season End
 
   /// TV Episode Start
-  Future<PageData<TVEpisode>> tvEpisodeQueryAll([SearchQuery? query]) async {
+  Future<PageData<TVEpisode>> tvEpisodeQueryAll([MediaSearchQuery? query]) async {
     final data = await client.post('/tv/episode/query/all', data: query?.toMap());
     return PageData.fromJson(data, TVEpisode.fromJson);
   }
@@ -556,6 +577,18 @@ abstract class ApiPlatform extends PlatformInterface {
     return client
         .delete('/library/delete/id', data: {'id': id})
         .onSuccess((_) => EventDispatcher.add(.library, .delete, id));
+  }
+
+  Future<void> libraryEnableById(dynamic id) {
+    return client
+        .post('/library/enable/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.library, .update, id));
+  }
+
+  Future<void> libraryDisableById(dynamic id) {
+    return client
+        .post('/library/disable/id', data: {'id': id})
+        .onSuccess((_) => EventDispatcher.add(.library, .update, id));
   }
 
   /// Library End

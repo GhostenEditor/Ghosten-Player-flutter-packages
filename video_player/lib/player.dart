@@ -1,4 +1,3 @@
-export 'src/config.dart';
 export 'src/enums.dart';
 export 'src/models.dart';
 export 'src/player_controller.dart';

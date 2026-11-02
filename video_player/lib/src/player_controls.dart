@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../player.dart';
 import 'player_platform_interface.dart';
@@ -34,49 +33,59 @@ class PlayerPlatformView extends StatefulWidget {
     required this.playerType,
     this.initializeFailed,
     this.mpvVersion,
+    required this.extensionRendererMode,
+    required this.enableDecoderFallback,
+    required this.subtitleStyle,
+    this.preferredSubtitleLanguage,
+    this.preferredAudioLanguage,
+    this.controls,
   });
 
+  final Widget? controls;
   final VoidCallback? initialized;
   final Function(PlatformException)? initializeFailed;
   final bool autoPip;
   final PlayerType playerType;
   final String? mpvVersion;
+  final int extensionRendererMode;
+  final String? preferredSubtitleLanguage;
+  final String? preferredAudioLanguage;
+  final bool enableDecoderFallback;
+  final List<int> subtitleStyle;
 
   @override
   State<PlayerPlatformView> createState() => _PlayerPlatformViewState();
 }
 
 class _PlayerPlatformViewState extends State<PlayerPlatformView> {
+  late final creationParams = <String, dynamic>{
+    'type': widget.playerType.name,
+    'mpvVersion': widget.mpvVersion,
+    'preferredSubtitleLanguage': widget.preferredSubtitleLanguage,
+    'preferredAudioLanguage': widget.preferredAudioLanguage,
+    'autoPip': widget.autoPip,
+    'extensionRendererMode': widget.extensionRendererMode,
+    'enableDecoderFallback': widget.enableDecoderFallback,
+    'subtitleStyle': widget.subtitleStyle,
+    'backgroundColor': Theme.of(context).scaffoldBackgroundColor.toARGB32(),
+  };
+  bool _loaded = false;
+
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) {
-        return;
-      }
-      final box = context.findRenderObject()! as RenderBox;
-      final Offset offset = box.globalToLocal(Offset.zero);
-      final double devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
-      final String language = Localizations.localeOf(context).languageCode;
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      if (!context.mounted) {
-        return;
-      }
+    Future.microtask(() async {
       try {
-        await PlayerPlatform.instance.init({
-          'type': widget.playerType.name,
-          'mpvVersion': widget.mpvVersion,
-          'language': language,
-          'width': (box.size.width * devicePixelRatio).round(),
-          'height': (box.size.height * devicePixelRatio).round(),
-          'top': (offset.dy * -1 * devicePixelRatio).round(),
-          'left': (offset.dx * -1 * devicePixelRatio).round(),
-          'autoPip': widget.autoPip,
-          'extensionRendererMode': PlayerConfig.getExtensionRendererMode(prefs),
-          'enableDecoderFallback': PlayerConfig.getEnableDecoderFallback(prefs),
-          'subtitleStyle': PlayerConfig.getSubtitleSettings(prefs),
-        });
+        await PlayerPlatform.instance.create(creationParams);
+        await WidgetsBinding.instance.endOfFrame;
+        if (!context.mounted) {
+          return;
+        }
         widget.initialized?.call();
+        setState(() => _loaded = true);
       } on PlatformException catch (e) {
+        if (!context.mounted) {
+          return;
+        }
         widget.initializeFailed?.call(e);
       }
     });
@@ -91,6 +100,8 @@ class _PlayerPlatformViewState extends State<PlayerPlatformView> {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.expand();
+    return _loaded
+        ? widget.controls ?? const SizedBox.expand()
+        : ColoredBox(color: Theme.of(context).scaffoldBackgroundColor, child: const SizedBox.expand());
   }
 }

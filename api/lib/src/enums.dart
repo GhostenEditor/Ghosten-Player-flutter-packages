@@ -108,10 +108,10 @@ enum SubtitleType {
   }
 }
 
-enum EventType { series, season, episode, movie, playlist, storage, library, server, subtitle }
+enum EventType { series, season, episode, movie, playlist, storage, library, server, subtitle, dns }
 
 enum EventSubType { add, update, delete }
 
-enum ScheduleTaskEventType { syncLibrary, scrapeLibrary }
+enum ScheduleTaskEventType { syncLibrary, scrapeLibrary, palette }
 
 enum ScheduleTaskEventStatus { idle, update, done, error }

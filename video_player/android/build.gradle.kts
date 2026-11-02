@@ -71,15 +71,15 @@ kotlin {
     }
 }
 
-val media3_version = "1.11.1"
+val media3Version = "1.11.1"
 dependencies {
-    implementation("androidx.media3:media3-ui:${media3_version}")
-    implementation("androidx.media3:media3-datasource:${media3_version}")
-    implementation("androidx.media3:media3-datasource-rtmp:${media3_version}")
-    implementation("androidx.media3:media3-session:${media3_version}")
-    implementation("androidx.media3:media3-exoplayer:${media3_version}")
-    implementation("androidx.media3:media3-exoplayer-hls:${media3_version}")
-    implementation("androidx.media3:media3-exoplayer-rtsp:${media3_version}")
+    implementation("androidx.media3:media3-ui:${media3Version}")
+    implementation("androidx.media3:media3-datasource:${media3Version}")
+    implementation("androidx.media3:media3-datasource-rtmp:${media3Version}")
+    implementation("io.github.peerless2012:ass-media:0.5.1")
+    implementation("androidx.media3:media3-session:${media3Version}")
+    implementation("androidx.media3:media3-exoplayer:${media3Version}")
+    implementation("androidx.media3:media3-exoplayer-hls:${media3Version}")
+    implementation("androidx.media3:media3-exoplayer-rtsp:${media3Version}")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("org.mockito:mockito-core:5.0.0")
 }

@@ -153,32 +153,12 @@ class PlayerWeb extends PlayerPlatform {
   }
 
   @override
-  Future<bool?> requestPip() async {
-    return false;
-  }
-
-  @override
   Future<String?> getVideoThumbnail(int position) async {
     return null;
   }
 
   @override
-  Future<bool?> canPip() async {
-    return false;
-  }
-
-  @override
   Future<void> setTransform(List<double> matrix) async {}
-
-  @override
-  Future<void> enterFullscreen() async {
-    await invoke('player_fullscreen', {'fullscreen': true});
-  }
-
-  @override
-  Future<void> exitFullscreen() async {
-    await invoke('player_fullscreen', {'fullscreen': false});
-  }
 
   @override
   void setMethodCallHandler(Future<dynamic> Function(MethodCall call)? handler) {
@@ -186,8 +166,8 @@ class PlayerWeb extends PlayerPlatform {
   }
 
   @override
-  Future<void> init(Map<String, dynamic> args) async {
-    await invoke('init', args);
+  Future<void> create(Map<String, dynamic> args) async {
+    await invoke('create', args);
   }
 
   @override

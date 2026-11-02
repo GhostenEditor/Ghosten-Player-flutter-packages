@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:msgpack_dart/msgpack_dart.dart';
@@ -49,12 +48,6 @@ class Client extends ApiClient {
                 handler.next(
                   options
                     ..contentType = 'application/msgpack'
-                    ..headers.putIfAbsent(
-                      'Accept-Language',
-                      () => navigatorKey.currentContext != null
-                          ? Localizations.localeOf(navigatorKey.currentContext!).languageCode
-                          : null,
-                    )
                     ..responseType = switch (options.uri.path) {
                       '/dlna/discover/cb' ||
                       '/network/diagnostics/cb' ||

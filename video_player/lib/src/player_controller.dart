@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 import 'enums.dart';
 import 'models.dart';
@@ -13,16 +14,21 @@ abstract class PlayerBaseController {
   abstract final ValueNotifier<Duration> position;
   abstract final ValueNotifier<Duration> bufferedPosition;
   abstract final ValueNotifier<Duration> duration;
-  abstract final ValueNotifier<PlayerStatus> status;
   abstract final ValueNotifier<dynamic> error;
+  abstract final ValueNotifier<String?> fatalError;
+
+  abstract final ValueNotifier<PlaybackState> playbackState;
+  abstract final ValueNotifier<bool> isPlaying;
 
   @mustCallSuper
   void dispose() {
     position.dispose();
     bufferedPosition.dispose();
     duration.dispose();
-    status.dispose();
+    playbackState.dispose();
+    isPlaying.dispose();
     error.dispose();
+    fatalError.dispose();
   }
 
   Future<String?> getVideoThumbnail(int position);
@@ -36,7 +42,6 @@ class PlayerController extends PlayerBaseController {
       isFirst.value = index.value == 0;
       isLast.value = index.value == playlist.value.length - 1;
     });
-    PlayerPlatform.instance.canPip().then((value) => canPip.value = value ?? false);
     PlayerPlatform.instance.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'position':
@@ -45,16 +50,18 @@ class PlayerController extends PlayerBaseController {
           duration.value = Duration(milliseconds: (call.arguments as num).toInt());
         case 'networkSpeed':
           networkSpeed.value = call.arguments;
-        case 'updateStatus':
-          status.value = PlayerStatus.fromString(call.arguments);
-          if (status.value != PlayerStatus.error && status.value != PlayerStatus.idle) {
+        case 'playbackState':
+          playbackState.value = PlaybackState.fromInt(call.arguments);
+          if (playbackState.value != PlaybackState.idle) {
             fatalError.value = null;
             error.value = null;
           }
-          if (status.value == PlayerStatus.ended && index.value != null) {
+          if (playbackState.value == PlaybackState.ended && index.value != null) {
             await next(index.value! + 1);
           }
-          if (status.value == PlayerStatus.playing) {
+        case 'isPlaying':
+          isPlaying.value = call.arguments;
+          if (isPlaying.value) {
             _subscription?.resume();
           } else {
             _subscription?.pause();
@@ -81,8 +88,6 @@ class PlayerController extends PlayerBaseController {
           index.value = call.arguments;
         case 'volumeChanged':
           volume.value = call.arguments;
-        case 'mediaInfo':
-          mediaInfo.value = MediaInfo.fromJson(call.arguments);
         case 'willSkip':
           willSkip.value = UniqueKey();
       }
@@ -90,7 +95,7 @@ class PlayerController extends PlayerBaseController {
 
     if (onPlaybackStatusUpdate != null) {
       _subscription = _timer.listen((_) {
-        if (status.value == PlayerStatus.playing) {
+        if (isPlaying.value) {
           onPlaybackStatusUpdate!(
             _playlistItem.value!.others,
             PlaybackStatusEvent.progress,
@@ -110,8 +115,8 @@ class PlayerController extends PlayerBaseController {
   final ValueNotifier<String> subTitle = ValueNotifier('');
   @override
   final ValueNotifier<dynamic> error = ValueNotifier(null);
+  @override
   final ValueNotifier<String?> fatalError = ValueNotifier(null);
-  final ValueNotifier<Object?> playlistError = ValueNotifier(null);
   final ValueNotifier<double> playbackSpeed = ValueNotifier(1);
   final ValueNotifier<AspectRatioType> aspectRatio = ValueNotifier(AspectRatioType.auto);
   final ValueNotifier<ResizeMode> resizeMode = ValueNotifier(ResizeMode.fit);
@@ -124,11 +129,11 @@ class PlayerController extends PlayerBaseController {
   @override
   final ValueNotifier<Duration> bufferedPosition = ValueNotifier(Duration.zero);
   @override
-  final ValueNotifier<PlayerStatus> status = ValueNotifier(PlayerStatus.idle);
+  final ValueNotifier<PlaybackState> playbackState = ValueNotifier(PlaybackState.idle);
+  @override
+  final ValueNotifier<bool> isPlaying = ValueNotifier(false);
   final ValueNotifier<MediaTrackGroup> trackGroup = ValueNotifier(MediaTrackGroup.empty());
-  final ValueNotifier<MediaInfo?> mediaInfo = ValueNotifier(null);
   final ValueNotifier<dynamic> willSkip = ValueNotifier(null);
-  final ValueNotifier<bool> canPip = ValueNotifier(false);
   final ValueNotifier<bool> pipMode = ValueNotifier(false);
   final ValueNotifier<bool> isCasting = ValueNotifier(false);
   final ValueNotifier<int?> onMediaIndexChanged = ValueNotifier(null);
@@ -157,7 +162,6 @@ class PlayerController extends PlayerBaseController {
     aspectRatio.dispose();
     resizeMode.dispose();
     trackGroup.dispose();
-    mediaInfo.dispose();
     _playlistItem.dispose();
     _subscription?.cancel();
     beforeMediaChanged.dispose();
@@ -184,12 +188,14 @@ class PlayerController extends PlayerBaseController {
       if (fatalError.value != null) {
         fatalError.value = null;
       }
-      if (status.value == PlayerStatus.error) {
-        status.value = PlayerStatus.idle;
-      }
       await setSource(null);
       if (onPlaybackStatusUpdate != null && _playlistItem.value != null) {
-        await onPlaybackStatusUpdate!(_playlistItem.value!.others, PlaybackStatusEvent.stop, position.value, duration.value);
+        await onPlaybackStatusUpdate!(
+          _playlistItem.value!.others,
+          PlaybackStatusEvent.stop,
+          position.value,
+          duration.value,
+        );
       }
       try {
         if (onGetPlayBackInfo == null) {
@@ -208,10 +214,10 @@ class PlayerController extends PlayerBaseController {
           );
         }
       } on PlatformException catch (e) {
-        status.value = PlayerStatus.error;
+        playbackState.value = PlaybackState.idle;
         fatalError.value = 'Code: ${e.code}, Message: ${e.message}';
       } catch (e) {
-        status.value = PlayerStatus.error;
+        playbackState.value = PlaybackState.idle;
         fatalError.value = e.toString();
       }
     }
@@ -233,10 +239,6 @@ class PlayerController extends PlayerBaseController {
       id = null;
     }
     return PlayerPlatform.instance.setTrack(type, id);
-  }
-
-  Future<bool?> requestPip() {
-    return PlayerPlatform.instance.requestPip();
   }
 
   void setSkipPosition(String type, Duration duration) {
@@ -279,13 +281,18 @@ class PlayerController extends PlayerBaseController {
     }, index);
   }
 
-  Future<void> setSource(PlayerFileInfo? playItem) {
+  Future<void> setSource(PlayerFileInfo? playItem) async {
+    String? poster;
+    if (currentItem?.poster != null) {
+      final FileInfo? fileInfo = await DefaultCacheManager().getFileFromCache(currentItem!.poster!);
+      poster = fileInfo?.file.path;
+    }
     return PlayerPlatform.instance.setSource(
       playItem != null
           ? {
               'title': currentItem?.title,
               'description': currentItem?.description,
-              'poster': currentItem?.poster,
+              'poster': poster,
               'start': currentItem?.start.inMilliseconds,
               'end': currentItem?.end.inMilliseconds,
               'url': playItem.url.toString(),

@@ -46,11 +46,18 @@ class MethodChannelFilePicker extends FilePickerPlatform {
   }
 
   @override
-  Future<void> requestStorageManagePermission() async {
-    final bool? permit = await methodChannel.invokeMethod('requestStorageManagePermission');
-    if (permit != true) {
-      throw PlatformException(code: storagePermissionExceptionCode);
-    }
+  Future<bool> requestStorageManagePermission() async {
+    return await methodChannel.invokeMethod('requestStorageManagePermission') ?? false;
+  }
+
+  @override
+  Future<bool> install(String filePath) async {
+    return await methodChannel.invokeMethod('installApk', filePath) ?? false;
+  }
+
+  @override
+  Future<bool> requestInstallPermission() async {
+    return await methodChannel.invokeMethod<bool>('requestInstallPermission') ?? false;
   }
 
   @override

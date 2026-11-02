@@ -41,10 +41,6 @@ abstract class PlayerPlatform extends PlatformInterface {
     throw UnimplementedError('setTrack() has not been implemented.');
   }
 
-  Future<bool?> requestPip() {
-    throw UnimplementedError('requestPip() has not been implemented.');
-  }
-
   Future<void> setTransform(List<double> matrix) {
     throw UnimplementedError('setTransform() has not been implemented.');
   }
@@ -69,18 +65,6 @@ abstract class PlayerPlatform extends PlatformInterface {
     throw UnimplementedError('getVideoThumbnail() has not been implemented.');
   }
 
-  Future<bool?> canPip() {
-    throw UnimplementedError('canPip() has not been implemented.');
-  }
-
-  Future<void> enterFullscreen() {
-    throw UnimplementedError('enterFullscreen() has not been implemented.');
-  }
-
-  Future<void> exitFullscreen() {
-    throw UnimplementedError('enterFullscreen() has not been implemented.');
-  }
-
   Future<void> setPlayerOption(String optionName, dynamic optionValue) {
     throw UnimplementedError('setPlayerOption() has not been implemented.');
   }
@@ -93,7 +77,7 @@ abstract class PlayerPlatform extends PlatformInterface {
     throw UnimplementedError('setMethodCallHandler() has not been implemented.');
   }
 
-  Future<void> init(Map<String, dynamic> args) {
+  Future<void> create(Map<String, dynamic> args) {
     throw UnimplementedError('init() has not been implemented.');
   }
 

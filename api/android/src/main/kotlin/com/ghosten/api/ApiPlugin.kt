@@ -84,8 +84,7 @@ class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnec
                             withContext(Dispatchers.IO) {
                                 apiService?.apiCallWithCallback(
                                     call.method,
-                                    call.argument<ByteArray>("data")!!,
-                                    call.argument<ByteArray>("params")!!,
+                                    call.argument("data")!!,
                                     object : ApiMethodHandler {
                                         override fun onApiMethodUpdate(data: ByteArray) {
                                             activity.runOnUiThread {
@@ -109,11 +108,7 @@ class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnec
                     } else {
                         try {
                             val data = withContext(Dispatchers.IO) {
-                                apiService!!.apiCall(
-                                    call.method,
-                                    call.argument<ByteArray>("data")!!,
-                                    call.argument<ByteArray>("params")!!,
-                                )
+                                apiService!!.apiCall(call.method, call.argument("data")!!)
                             }
                             result.success(data)
 
@@ -179,6 +174,5 @@ class ApiPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ServiceConnec
 
     companion object {
         const val PLUGIN_NAMESPACE = "com.ghosten.player/api"
-        const val TAG = "API Error"
     }
 }
